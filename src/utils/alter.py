@@ -8,7 +8,7 @@ from math import sqrt, pi, cos, sin
 from random import *
 
 # Create a random generator.
-random = random.random()
+random = Random
 
 
 class Alter:

@@ -10,10 +10,11 @@ from random import *
 from ptrail.core.TrajectoryDF import PTRAILDataFrame
 from typing import Union
 
+import math
 
 class Selection:
     @staticmethod
-    def select_randomly(dataset: Union[PTRAILDataFrame, pd.DataFrame], customRandom: random.Random,
+    def select_randomly(dataset: Union[PTRAILDataFrame, pd.DataFrame], customRandom: Random,
                         test_split_per: float = .2,):
         """
             Given the trajectories and the test splitting percentage, randomly
@@ -39,7 +40,8 @@ class Selection:
 
         # Take out a percentage of trajectories to return as the testing data.
         testValues = []
-        for i in range(math.floor(len(unique_values) * test_split_per)):
+        for i in range(math.floor(len(unique_values_copy) * test_split_per)):
+            print(len(unique_values_copy), customRandom.randrange(len(unique_values_copy)))
             testValues.append(unique_values_copy.pop(customRandom.randrange(len(unique_values_copy))))
 
         # Return the dictionary containing the train test split.
