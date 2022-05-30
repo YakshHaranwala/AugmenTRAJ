@@ -6,6 +6,7 @@
 """
 from math import sqrt, pi, cos, sin
 from random import *
+import math
 
 # Create a random generator.
 random = Random

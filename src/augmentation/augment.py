@@ -6,12 +6,14 @@
     | Authors: Nicholas Jesperson, Yaksh J. Haranwala
 """
 import random
+import math
 
 import pandas as pd
 
 from ptrail.core.TrajectoryDF import PTRAILDataFrame
 from src.utils.alter import Alter
 from typing import Union
+
 
 
 class Augmentation:
@@ -50,8 +52,8 @@ class Augmentation:
 
         # Using lambda functions here now to alter row by row, need to do this as the lon circle function also
         # uses the latitude
-        noiseData['lat'] = noiseData.apply(lambda row: _alterLatCircle(row, angle, pradius), axis=1)
-        noiseData['lon'] = noiseData.apply(lambda row: _alterLonCircle(row, angle, pradius), axis=1)
+        noiseData['lat'] = noiseData.apply(lambda row: Alter.alter_latitude_circle_randomly(row, angle, pradius), axis=1)
+        noiseData['lon'] = noiseData.apply(lambda row: Alter.alter_longitude_circle_randomly(row, angle, pradius), axis=1)
         newDataSet.update(noiseData)
 
         newDataSet['traj_id'] = newDataSet.apply(lambda row: row.traj_id + str(randPoint), axis=1)
