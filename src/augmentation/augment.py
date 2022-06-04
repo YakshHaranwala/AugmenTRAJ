@@ -15,7 +15,6 @@ from src.utils.alter import Alter
 from typing import Union
 
 
-
 class Augmentation:
     @staticmethod
     def augment_trajectories_with_randomly_generated_points(dataset: Union[PTRAILDataFrame, pd.DataFrame],
