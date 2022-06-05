@@ -11,6 +11,8 @@ import math
 import pandas as pd
 
 from ptrail.core.TrajectoryDF import PTRAILDataFrame
+from ptrail.preprocessing.interpolation import Interpolation as ip
+import ptrail.utilities.constants as const
 from src.utils.alter import Alter
 from typing import Union
 
@@ -58,3 +60,37 @@ class Augmentation:
         newDataSet['traj_id'] = newDataSet.apply(lambda row: row.traj_id + str(randPoint), axis=1)
         newDataSet.set_index(["traj_id", "DateTime"])
         return newDataSet
+    
+    
+    @staticmethod
+    def augment_trajectories_with_interpolation(dataset: Union[PTRAILDataFrame, pd.DataFrame],
+                                                   time_jump: int, ip_type: str = 'linear', numPoints: int = 200):
+            """
+            Given the trajectories that are to be augmented, augment the trajectories by
+            generating additional points randomly based on interpolation. 
+
+            Parameters
+            ----------
+                dataset: Union[PTRAILDataFrame, pd.DataFrame]
+                    The dataset containing the trajectories to be selected.
+                time_jump: Input parameter for ptrails interpolation function
+                ip_type: determines which kind of interpolation is going to be used. 
+
+            Returns
+            -------
+                pd.DataFrame
+                    The dataframe containing the augmented dataframe.
+        """
+            dataSetReset = dataset.reset_index()
+            randPoint = random.randint(0, numPoints)
+            dataSetFilt = dataSetReset.filter(["traj_id", "DateTime","lat", "lon"])
+            augData = ip.interpolate_position(dataSetFilt,
+                                            sampling_rate=time_jump,
+                                            ip_type=ip_type)
+            
+            
+            augData = augData.reset_index()
+            augData['traj_id'] = augData.traj_id.apply(lambda traj: traj + str(randPoint))
+            
+            return augData
+            
