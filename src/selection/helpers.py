@@ -21,15 +21,24 @@ class SelectionHelpers:
 
             Note
             ----
-                - The tolerance is calculated as follows:
+                | The tolerance is calculated as follows:
                       stat_range * tolerance multiplier
-                - This is done in order to define a strict range for
+                | This is done in order to define a strict range for
                   each of the feature of the trajectory.
 
             Note
             ----
                 The tolerance_multiplier has to be between 0 and 1 and ideally
                 smaller than 0.75.
+
+            Parameters
+            ----------
+                full_df_stats: pd.DataFrame
+                    The dataframe containing the stats for the entire dataset given.
+                single_traj_stats: pd.DataFrame
+                    The dataframe containing the stats for a single trajectory.
+                tolerance_multiplier: float
+                    The multiplier to control the number of trajectories selected for augmentation.
         """
         if 0 < tolerance_multiplier <= 1:
             flags = []

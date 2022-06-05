@@ -12,14 +12,14 @@ from ptrail.core.TrajectoryDF import PTRAILDataFrame
 from ptrail.features.kinematic_features import KinematicFeatures
 from ptrail.preprocessing.statistics import Statistics
 from src.selection.helpers import SelectionHelpers
+from src.utils.alter import Alter
 
 import math
 
 
 class Selection:
     @staticmethod
-    def select_randomly(dataset: Union[PTRAILDataFrame, pd.DataFrame], customRandom: Random,
-                        test_split_per: float = .2, ):
+    def select_randomly(dataset: Union[PTRAILDataFrame, pd.DataFrame], test_split_per: float = .2, ):
         """
             Given the trajectories and the test splitting percentage, randomly
             select a percentage of trajectories that will be augmented.
@@ -45,8 +45,7 @@ class Selection:
         # Take out a percentage of trajectories to return as the testing data.
         testValues = []
         for i in range(math.floor(len(unique_values_copy) * test_split_per)):
-            print(len(unique_values_copy), customRandom.randrange(len(unique_values_copy)))
-            testValues.append(unique_values_copy.pop(customRandom.randrange(len(unique_values_copy))))
+            testValues.append(unique_values_copy.pop(randrange(len(unique_values_copy))))
 
         # Return the dictionary containing the train test split.
         return {"test": testValues, "train": unique_values_copy}
@@ -126,17 +125,21 @@ class Selection:
                 dict:
                     Dictionary containing the test and train partitions.
         """
+        # Generate Kinematic stats for the given dataframe.
         kinematic_stats = Statistics.generate_kinematic_stats(dataset, target_col)
 
+        # Generate kinematic features for the entire data given and take out the required
+        # stats only.
         df_features = KinematicFeatures.generate_kinematic_features(dataset)
         full_df_stats = df_features[['Distance', 'Distance_from_start', 'Speed', 'Acceleration', 'Jerk',
                             'Bearing', 'Bearing_Rate', 'Rate_of_bearing_rate']].describe(
             percentiles=[.1, .25, .5, .75, .9]).iloc[1:, :]
 
+        # Select Trajectories to be augmented.
         traj_ids = df_features.reset_index()['traj_id'].unique().tolist()
-
-        include = []
         selected_trajs = []
+        train_vals = []
+        test_vals = []
         for i in range(len(traj_ids)):
             # Get the required stats for a single trajectory and adjust
             # its dataframe to resemble the stats df of the entire df.
@@ -144,9 +147,13 @@ class Selection:
                 kinematic_stats.reset_index()['traj_id'] == traj_ids[i]
                 ].drop(columns=['traj_id', 'Species']).set_index('Columns').transpose()
 
-            include.append(SelectionHelpers.include_or_not(full_df_stats, single_traj, 0.52))
-            if SelectionHelpers.include_or_not(full_df_stats, single_traj, 0.52):
-                selected_trajs.append(dataset.reset_index().loc[dataset.reset_index()['traj_id'] == traj_ids[i]])
+            if not SelectionHelpers.include_or_not(full_df_stats, single_traj, tolerance) and \
+                    len(test_vals) <= math.floor(len(traj_ids) * test_split_per):
+                test_vals.append(traj_ids[i])
+            else:
+                if SelectionHelpers.include_or_not(full_df_stats, single_traj, tolerance):
+                    train_vals.append(traj_ids[i] + "sel")
+                else:
+                    train_vals.append(traj_ids[i])
 
-        return PTRAILDataFrame(data_set=pd.concat(selected_trajs), traj_id='traj_id',
-                               latitude='lat', longitude='lon', datetime='DateTime')
+        return {"test": test_vals, "train": train_vals}

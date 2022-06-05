@@ -53,19 +53,20 @@ class Augmentation:
 
         # Using lambda functions here now to alter row by row, need to do this as the lon circle function also
         # uses the latitude
-        noiseData['lat'] = noiseData.apply(lambda row: Alter.alter_latitude_circle_randomly(row, angle, pradius), axis=1)
-        noiseData['lon'] = noiseData.apply(lambda row: Alter.alter_longitude_circle_randomly(row, angle, pradius), axis=1)
+        noiseData['lat'] = noiseData.apply(lambda row: Alter.alter_latitude_circle_randomly(row, angle, pradius),
+                                           axis=1)
+        noiseData['lon'] = noiseData.apply(lambda row: Alter.alter_longitude_circle_randomly(row, angle, pradius),
+                                           axis=1)
         newDataSet.update(noiseData)
 
         newDataSet['traj_id'] = newDataSet.apply(lambda row: row.traj_id + str(randPoint), axis=1)
         newDataSet.set_index(["traj_id", "DateTime"])
         return newDataSet
-    
-    
+
     @staticmethod
     def augment_trajectories_with_interpolation(dataset: Union[PTRAILDataFrame, pd.DataFrame],
-                                                   time_jump: int, ip_type: str = 'linear', numPoints: int = 200):
-            """
+                                                time_jump: int, ip_type: str = 'linear', numPoints: int = 200):
+        """
             Given the trajectories that are to be augmented, augment the trajectories by
             generating additional points randomly based on interpolation. 
 
@@ -81,16 +82,14 @@ class Augmentation:
                 pd.DataFrame
                     The dataframe containing the augmented dataframe.
         """
-            dataSetReset = dataset.reset_index()
-            randPoint = random.randint(0, numPoints)
-            dataSetFilt = dataSetReset.filter(["traj_id", "DateTime","lat", "lon"])
-            augData = ip.interpolate_position(dataSetFilt,
-                                            sampling_rate=time_jump,
-                                            ip_type=ip_type)
-            
-            
-            augData = augData.reset_index()
-            augData['traj_id'] = augData.traj_id.apply(lambda traj: traj + str(randPoint))
-            
-            return augData
-            
+        dataSetReset = dataset.reset_index()
+        randPoint = random.randint(0, numPoints)
+        dataSetFilt = dataSetReset.filter(["traj_id", "DateTime", "lat", "lon"])
+        augData = ip.interpolate_position(dataSetFilt,
+                                          sampling_rate=time_jump,
+                                          ip_type=ip_type)
+
+        augData = augData.reset_index()
+        augData['traj_id'] = augData.traj_id.apply(lambda traj: traj + str(randPoint))
+
+        return augData
