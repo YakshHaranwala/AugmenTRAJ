@@ -21,7 +21,7 @@ class Augmentation:
     @staticmethod
     def augment_trajectories_with_randomly_generated_points(dataset: Union[PTRAILDataFrame, pd.DataFrame],
                                                             pradius: float, k: float, numPoints: int,
-                                                            random: random.Random):
+                                                            random: random.Random, circle: str = 'on'):
         """
             Given the trajectories that are to be augmented, augment the trajectories by
             generating points randomly based on the given pradius. Further explanation can
@@ -53,12 +53,19 @@ class Augmentation:
 
         # Using lambda functions here now to alter row by row, need to do this as the lon circle function also
         # uses the latitude
-        noiseData['lat'] = noiseData.apply(lambda row: Alter.alter_latitude_circle_randomly(row, angle, pradius),
+        if (circle == 'on'):
+            noiseData['lat'] = noiseData.apply(lambda row: Alter.alter_latitude_circle_randomly(row, angle, pradius),
                                            axis=1)
-        noiseData['lon'] = noiseData.apply(lambda row: Alter.alter_longitude_circle_randomly(row, angle, pradius),
+            noiseData['lon'] = noiseData.apply(lambda row: Alter.alter_longitude_circle_randomly(row, angle, pradius),
                                            axis=1)
+        elif (circle == 'in'):
+            noiseData['lat'] = noiseData.apply(lambda row: Alter.alter_latitude_randomly(row, pradius),
+                                           axis=1)
+            noiseData['lon'] = noiseData.apply(lambda row: Alter.alter_longitude_randomly(row, pradius),
+                                           axis=1)
+        
+        
         newDataSet.update(noiseData)
-
         newDataSet['traj_id'] = newDataSet.apply(lambda row: row.traj_id + str(randPoint), axis=1)
         newDataSet.set_index(["traj_id", "DateTime"])
         return newDataSet

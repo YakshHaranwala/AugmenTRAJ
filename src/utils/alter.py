@@ -14,7 +14,7 @@ random = Random
 
 class Alter:
     @staticmethod
-    def alter_latitude_randomly(lat, pradius):
+    def alter_latitude_randomly(row, pradius):
         """
             Given a latitude point and a radius, alter the point in order
             to create a new latitude within the circle of given radius.
@@ -41,12 +41,12 @@ class Alter:
         # Based on the random number generated above, either subtract
         # or add the theta value and return the point.
         if sign == 1:
-            return lat + r * cos(theta)
+            return row.lat + r * cos(theta)
         else:
-            return lat - r * cos(theta)
+            return row.lat - r * cos(theta)
 
     @staticmethod
-    def alter_longitude_randomly(lon, pradius):
+    def alter_longitude_randomly(row, pradius):
         """
             Given a longitude point and a radius, alter the point in order
             to create a new longitude within the circle of given radius.
@@ -73,9 +73,9 @@ class Alter:
         # Based on the random number generated above, either subtract
         # or add the theta value and return the point.
         if sign == 1:
-            return lon + r * cos(theta)
+            return row.lon + r * cos(theta)
         else:
-            return lon - r * cos(theta)
+            return row.lon - r * cos(theta)
 
     @staticmethod
     def alter_latitude_circle_randomly(row, angle, pradius):
