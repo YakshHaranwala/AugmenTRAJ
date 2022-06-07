@@ -32,11 +32,13 @@ class Alter:
                     The altered latitude value.
         """
         # Choose randomly whether to add or subtract from the point.
-        sign = random.randint(1, 2)
+        
+        sign = randint(1, 2)
 
+        
         # Generate the angle value.
-        r = pradius * sqrt(random.random())
-        theta = random.random() * 2 * pi
+        r = pradius * sqrt(uniform(0,1))
+        theta = uniform(0,1) * 2 * pi
 
         # Based on the random number generated above, either subtract
         # or add the theta value and return the point.
@@ -64,11 +66,11 @@ class Alter:
                     The altered latitude value.
         """
         # Choose randomly whether to add or subtract from the point.
-        sign = random.randint(1, 2)
+        sign = randint(1, 2)
 
         # Generate the angle value.
-        r = pradius * sqrt(random.random())
-        theta = random.random() * 2 * pi
+        r = pradius * sqrt(uniform(0,1))
+        theta = uniform(0,1) * 2 * pi
 
         # Based on the random number generated above, either subtract
         # or add the theta value and return the point.
