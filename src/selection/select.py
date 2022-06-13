@@ -145,7 +145,7 @@ class Selection:
             # its dataframe to resemble the stats df of the entire df.
             single_traj = kinematic_stats.reset_index().loc[
                 kinematic_stats.reset_index()['traj_id'] == traj_ids[i]
-                ].drop(columns=['traj_id', 'Species']).set_index('Columns').transpose()
+                ].drop(columns=['traj_id', target_col]).set_index('Columns').transpose()
 
             if not SelectionHelpers.include_or_not(full_df_stats, single_traj, tolerance) and \
                     len(test_vals) <= math.floor(len(traj_ids) * test_split_per):
