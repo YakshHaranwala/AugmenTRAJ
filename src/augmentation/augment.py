@@ -53,18 +53,17 @@ class Augmentation:
 
         # Using lambda functions here now to alter row by row, need to do this as the lon circle function also
         # uses the latitude
-        if (circle == 'on'):
+        if circle == 'on':
             noiseData['lat'] = noiseData.apply(lambda row: Alter.alter_latitude_circle_randomly(row, angle, pradius),
-                                           axis=1)
+                                               axis=1)
             noiseData['lon'] = noiseData.apply(lambda row: Alter.alter_longitude_circle_randomly(row, angle, pradius),
-                                           axis=1)
-        elif (circle == 'in'):
+                                               axis=1)
+        elif circle == 'in':
             noiseData['lat'] = noiseData.apply(lambda row: Alter.alter_latitude_randomly(row, pradius),
-                                           axis=1)
+                                               axis=1)
             noiseData['lon'] = noiseData.apply(lambda row: Alter.alter_longitude_randomly(row, pradius),
-                                           axis=1)
-        
-        
+                                               axis=1)
+
         newDataSet.update(noiseData)
         newDataSet['traj_id'] = newDataSet.apply(lambda row: row.traj_id + str(randPoint), axis=1)
         newDataSet.set_index(["traj_id", "DateTime"])
@@ -92,11 +91,12 @@ class Augmentation:
         dataSetReset = dataset.reset_index()
         randPoint = random.randint(0, numPoints)
         dataSetFilt = dataSetReset.filter(["traj_id", "DateTime", "lat", "lon"])
-        augData = ip.interpolate_position(dataSetFilt,
-                                          sampling_rate=time_jump,
-                                          ip_type=ip_type)
+        if len(dataSetFilt['traj_id'].unique()) > 0:
+            augData = ip.interpolate_position(dataSetFilt,
+                                              sampling_rate=time_jump,
+                                              ip_type=ip_type)
 
-        augData = augData.reset_index()
-        augData['traj_id'] = augData.traj_id.apply(lambda traj: traj + str(randPoint))
+            augData = augData.reset_index()
+            augData['traj_id'] = augData.traj_id.apply(lambda traj: traj + str(randPoint))
 
-        return augData
+            return augData
