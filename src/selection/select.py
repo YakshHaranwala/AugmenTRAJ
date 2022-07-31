@@ -19,7 +19,7 @@ import math
 
 class Selection:
     @staticmethod
-    def select_randomly(dataset: Union[PTRAILDataFrame, pd.DataFrame], test_split_per: float = .2, ):
+    def select_randomly(dataset: Union[PTRAILDataFrame, pd.DataFrame], customRandom:random, test_split_per: float = .2,   ):
         """
             Given the trajectories and the test splitting percentage, randomly
             select a percentage of trajectories that will be augmented.
@@ -45,7 +45,7 @@ class Selection:
         # Take out a percentage of trajectories to return as the testing data.
         testValues = []
         for i in range(math.floor(len(unique_values_copy) * test_split_per)):
-            testValues.append(unique_values_copy.pop(randrange(len(unique_values_copy))))
+            testValues.append(unique_values_copy.pop(customRandom.randrange(len(unique_values_copy))))
 
         # Return the dictionary containing the train test split.
         return {"test": testValues, "train": unique_values_copy}
