@@ -157,3 +157,35 @@ class Selection:
                     train_vals.append(traj_ids[i])
 
         return {"test": test_vals, "train": train_vals}
+    
+    
+    @staticmethod
+    def select_fewest_class(dataset: Union[PTRAILDataFrame, pd.DataFrame], classify:str, test_split_per: float = .2,  ):
+        """
+            Given the trajectories and the test splitting percentage, return a list of trajectories that have the least 
+            represented class
+
+            Parameters
+            ----------
+                dataset: Union[PTRAILDataFrame, pd.DataFrame]
+                    The dataframe containing the trajectory data
+                test_split_per: float
+                    The percentage of data that should be split as the testing dataset.
+                customRandom: random.Random
+                    Custom random number generator
+
+            Returns
+            -------
+                dict:
+                    Dictionary containing the test and train partitions.
+        """
+        # Get all the trajectory IDs from the dataset and make a copy of it.
+
+        minClass = dataset[classify].value_counts().idxmin()
+        
+        trainValues = list(dataset.loc[dataset[classify] == minClass].traj_id.unique())
+        testValues = list(dataset.loc[dataset[classify] != minClass].traj_id.unique())
+        
+        # Return the dictionary containing the train test split.
+        return {"test": testValues, "train": trainValues}
+
