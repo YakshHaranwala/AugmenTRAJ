@@ -5,9 +5,9 @@
     | Authors: Nicholas Jesperson, Yaksh J. Haranwala
 """
 import pandas as pd
+import numpy as np
 
 from typing import Union
-# from random import *
 from ptrail.core.TrajectoryDF import PTRAILDataFrame
 from ptrail.features.kinematic_features import KinematicFeatures
 from ptrail.preprocessing.statistics import Statistics
@@ -179,12 +179,24 @@ class Selection:
                 dict:
                     Dictionary containing the test and train partitions.
         """
-        # Get all the trajectory IDs from the dataset and make a copy of it.
+        # Get all the unique classification column values and set their counts in the dict to 0.
+        uniqueValsDict = dict(dataset[classify].value_counts())
+        for key in uniqueValsDict:
+            uniqueValsDict[key] = 0
 
-        minClass = dataset[classify].value_counts().idxmin()
+        # Create a list with unique trajectory IDs and for each unique trajectory, find which
+        # class it belongs to and then increase the count of that class.
+        uniqueTrajIds = dataset.traj_id.unique()
+        for traj_id in uniqueTrajIds:
+            key = dataset.reset_index().loc[dataset.reset_index()['traj_id'] == traj_id][classify].unique()
+            uniqueValsDict[key[0]] += 1
 
-        trainValues = list(dataset.loc[dataset[classify] == minClass].traj_id.unique())
-        testValues = list(dataset.loc[dataset[classify] != minClass].traj_id.unique())
+        # Get the class with the minimum count.
+        minClass = min(uniqueValsDict, key=uniqueValsDict.get)
+
+        # Todo: Improve the selection mechanism.
+        trainValues = list(dataset.loc[dataset[classify] == minClass].reset_index()['traj_id'].unique())
+        testValues = list(dataset.loc[dataset[classify] != minClass].reset_index()['traj_id'].unique())
 
         # Return the dictionary containing the train test split.
         return {"test": testValues, "train": trainValues}
