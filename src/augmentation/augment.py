@@ -36,7 +36,7 @@ class Augmentation:
                 k: float
                     The fraction of data which is to be sampled for adding noise.
                 numPoints: float
-                    #TODO: Explanation
+                    # TODO: Explanation
                 random: random.Random
                     Custom random number generator
 
@@ -45,7 +45,7 @@ class Augmentation:
                 pd.DataFrame
                     The dataframe containing the augmented dataframe.
         """
-        noiseData = dataset.sample(frac=k, replace=False)
+        noiseData = dataset.sample(frac=abs(k), replace=False)
         # copy here to create NEW data
         newDataSet = dataset.copy()
         randPoint = random.randint(0, numPoints)

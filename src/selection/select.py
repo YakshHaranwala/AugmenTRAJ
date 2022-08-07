@@ -7,7 +7,7 @@
 import pandas as pd
 
 from typing import Union
-from random import *
+# from random import *
 from ptrail.core.TrajectoryDF import PTRAILDataFrame
 from ptrail.features.kinematic_features import KinematicFeatures
 from ptrail.preprocessing.statistics import Statistics
@@ -19,7 +19,8 @@ import math
 
 class Selection:
     @staticmethod
-    def select_randomly(dataset: Union[PTRAILDataFrame, pd.DataFrame], customRandom:random, test_split_per: float = .2,   ):
+    def select_randomly(dataset: Union[PTRAILDataFrame, pd.DataFrame], customRandom,
+                        test_split_per: float = .2, ):
         """
             Given the trajectories and the test splitting percentage, randomly
             select a percentage of trajectories that will be augmented.
@@ -28,10 +29,10 @@ class Selection:
             ----------
                 dataset: Union[PTRAILDataFrame, pd.DataFrame]
                     The dataframe containing the trajectory data
-                test_split_per: float
-                    The percentage of data that should be split as the testing dataset.
                 customRandom: random.Random
                     Custom random number generator
+                test_split_per: float
+                    The percentage of data that should be split as the testing dataset.
 
             Returns
             -------
@@ -51,7 +52,7 @@ class Selection:
         return {"test": testValues, "train": unique_values_copy}
 
     @staticmethod
-    def select_traj_with_fewest(dataset: Union[PTRAILDataFrame, pd.DataFrame], customRandom: Random,
+    def select_traj_with_fewest(dataset: Union[PTRAILDataFrame, pd.DataFrame], customRandom,
                                 test_split_per: float = .2, ):
         """
             Given the trajectories and the test splitting percentage, randomly
@@ -132,7 +133,7 @@ class Selection:
         # stats only.
         df_features = KinematicFeatures.generate_kinematic_features(dataset)
         full_df_stats = df_features[['Distance', 'Distance_from_start', 'Speed', 'Acceleration', 'Jerk',
-                            'Bearing', 'Bearing_Rate', 'Rate_of_bearing_rate']].describe(
+                                     'Bearing', 'Bearing_Rate', 'Rate_of_bearing_rate']].describe(
             percentiles=[.1, .25, .5, .75, .9]).iloc[1:, :]
 
         # Select Trajectories to be augmented.
@@ -157,10 +158,9 @@ class Selection:
                     train_vals.append(traj_ids[i])
 
         return {"test": test_vals, "train": train_vals}
-    
-    
+
     @staticmethod
-    def select_fewest_class(dataset: Union[PTRAILDataFrame, pd.DataFrame], classify:str, test_split_per: float = .2,  ):
+    def select_fewest_class(dataset: Union[PTRAILDataFrame, pd.DataFrame], classify: str, test_split_per: float = .2, ):
         """
             Given the trajectories and the test splitting percentage, return a list of trajectories that have the least 
             represented class
@@ -171,8 +171,8 @@ class Selection:
                     The dataframe containing the trajectory data
                 test_split_per: float
                     The percentage of data that should be split as the testing dataset.
-                customRandom: random.Random
-                    Custom random number generator
+                classify: str
+                    The header of the class column.
 
             Returns
             -------
@@ -182,10 +182,9 @@ class Selection:
         # Get all the trajectory IDs from the dataset and make a copy of it.
 
         minClass = dataset[classify].value_counts().idxmin()
-        
+
         trainValues = list(dataset.loc[dataset[classify] == minClass].traj_id.unique())
         testValues = list(dataset.loc[dataset[classify] != minClass].traj_id.unique())
-        
+
         # Return the dictionary containing the train test split.
         return {"test": testValues, "train": trainValues}
-
