@@ -198,7 +198,7 @@ class Selection:
         testValues = []
         trainValues = []
         for val in dictKeys:
-            for i in range(math.floor(len(unique_values) * test_split_per * (1%len(dictKeys)))):
+            for i in range(math.floor(len(uniqueValsDict[val]) * test_split_per)):
                 testValues.append(uniqueValsDict[val].pop(customRandom.randrange(len(uniqueValsDict[val]))))
             trainValues = trainValues + uniqueValsDict[val]
                         
