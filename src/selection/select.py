@@ -160,7 +160,7 @@ class Selection:
         return {"test": test_vals, "train": train_vals}
 
     @staticmethod
-    def select_fewest_class(dataset: Union[PTRAILDataFrame, pd.DataFrame], classify: str, test_split_per: float = .2, ):
+    def select_fewest_class(dataset: Union[PTRAILDataFrame, pd.DataFrame], classify: str, customRandom, test_split_per: float = .2, ):
         """
             Given the trajectories and the test splitting percentage, return a list of trajectories that have the least 
             represented class
@@ -179,24 +179,29 @@ class Selection:
                 dict:
                     Dictionary containing the test and train partitions.
         """
+        unique_values = list(dataset.traj_id.unique())
         # Get all the unique classification column values and set their counts in the dict to 0.
         uniqueValsDict = dict(dataset[classify].value_counts())
         for key in uniqueValsDict:
-            uniqueValsDict[key] = 0
+            uniqueValsDict[key] = []
 
         # Create a list with unique trajectory IDs and for each unique trajectory, find which
         # class it belongs to and then increase the count of that class.
         uniqueTrajIds = dataset.traj_id.unique()
         for traj_id in uniqueTrajIds:
             key = dataset.reset_index().loc[dataset.reset_index()['traj_id'] == traj_id][classify].unique()
-            uniqueValsDict[key[0]] += 1
-
-        # Get the class with the minimum count.
-        minClass = min(uniqueValsDict, key=uniqueValsDict.get)
-
-        # Todo: Improve the selection mechanism.
-        trainValues = list(dataset.loc[dataset[classify] == minClass].reset_index()['traj_id'].unique())
-        testValues = list(dataset.loc[dataset[classify] != minClass].reset_index()['traj_id'].unique())
+            uniqueValsDict[key[0]].append(traj_id)
+            
+        dictKeys = uniqueValsDict.keys()
+        
+        
+        testValues = []
+        trainValues = []
+        for val in dictKeys:
+            for i in range(math.floor(len(unique_values) * test_split_per * (1%len(dictKeys)))):
+                testValues.append(uniqueValsDict[val].pop(customRandom.randrange(len(uniqueValsDict[val]))))
+            trainValues = trainValues + uniqueValsDict[val]
+                        
 
         # Return the dictionary containing the train test split.
         return {"test": testValues, "train": trainValues}
