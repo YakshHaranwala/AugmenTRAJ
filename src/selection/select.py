@@ -160,7 +160,8 @@ class Selection:
         return {"test": test_vals, "train": train_vals}
 
     @staticmethod
-    def select_fewest_class(dataset: Union[PTRAILDataFrame, pd.DataFrame], classify: str, customRandom, test_split_per: float = .2, ):
+    def select_fewest_class(dataset: Union[PTRAILDataFrame, pd.DataFrame], classify: str,
+                            customRandom, test_split_per: float = .2):
         """
             Given the trajectories and the test splitting percentage, return a list of trajectories that have the least 
             represented class
@@ -173,6 +174,8 @@ class Selection:
                     The percentage of data that should be split as the testing dataset.
                 classify: str
                     The header of the class column.
+                customRandom: Random
+                    A randomNumber generator with your preferred seed.
 
             Returns
             -------
@@ -193,7 +196,6 @@ class Selection:
             uniqueValsDict[key[0]].append(traj_id)
             
         dictKeys = uniqueValsDict.keys()
-        
         
         testValues = []
         trainValues = []
