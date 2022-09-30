@@ -20,8 +20,7 @@ from typing import Union
 class Augmentation:
     @staticmethod
     def augment_trajectories_with_randomly_generated_points(dataset: Union[PTRAILDataFrame, pd.DataFrame],
-                                                            pradius: float, k: float, numPoints: int,
-                                                            random: random.Random, circle: str = 'on'):
+                                                            random: random.Random, circle: str = 'on', k: float=.2):
         """
             Given the trajectories that are to be augmented, augment the trajectories by
             generating points randomly based on the given pradius. Further explanation can
@@ -48,7 +47,7 @@ class Augmentation:
         noiseData = dataset.sample(frac=abs(k), replace=False)
         # copy here to create NEW data
         newDataSet = dataset.copy()
-        randPoint = random.randint(0, numPoints)
+        randPoint = random.randint(0, 360)
         angle = math.pi * 2 * randPoint / numPoints
 
         # Using lambda functions here now to alter row by row, need to do this as the lon circle function also
