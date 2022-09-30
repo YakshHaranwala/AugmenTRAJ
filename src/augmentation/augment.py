@@ -39,24 +39,22 @@ class Augmentation:
                     The dataframe containing the augmented dataframe.
         """
         noiseData = dataset.sample(frac=abs(k), replace=False)
-        # copy here to create NEW data
         newDataSet = dataset.copy()
-        # randPoint = random.randint(0, 360)
-        #TODO: Figure out a proper way for angle.
-        # angle = math.pi * 2 * randPoint / numPoints
         angle = random.random() * 360
-
+        
+        randPoint = random.randint(1, 10000001)
+        
         # Using lambda functions here now to alter row by row, need to do this as the lon circle function also
         # uses the latitude
         if circle == 'on':
-            noiseData['lat'] = noiseData.apply(lambda row: Alter.alter_latitude_circle_randomly(row, angle, pradius),
+            noiseData['lat'] = noiseData.apply(lambda row: Alter.alter_latitude_circle_randomly(row, angle),
                                                axis=1)
-            noiseData['lon'] = noiseData.apply(lambda row: Alter.alter_longitude_circle_randomly(row, angle, pradius),
+            noiseData['lon'] = noiseData.apply(lambda row: Alter.alter_longitude_circle_randomly(row, angle),
                                                axis=1)
         elif circle == 'in':
-            noiseData['lat'] = noiseData.apply(lambda row: Alter.alter_latitude_randomly(row, pradius),
+            noiseData['lat'] = noiseData.apply(lambda row: Alter.alter_latitude_randomly(row),
                                                axis=1)
-            noiseData['lon'] = noiseData.apply(lambda row: Alter.alter_longitude_randomly(row, pradius),
+            noiseData['lon'] = noiseData.apply(lambda row: Alter.alter_longitude_randomly(row),
                                                axis=1)
 
         newDataSet.update(noiseData)
