@@ -78,8 +78,8 @@ class Alter:
             dist = row.Distance
 
         # Generate the angle value.
-        r = dist * 0.00001 * .1 * sqrt(uniform(0,1))
-        theta = uniform(0,1) * 2 * pi
+        r = dist * 0.00001 * .1 * sqrt(uniform(0, 1))
+        theta = uniform(0, 1) * 2 * pi
 
         # Based on the random number generated above, either subtract
         # or add the theta value and return the point.

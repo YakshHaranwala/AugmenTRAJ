@@ -40,7 +40,7 @@ class Selection:
                     Dictionary containing the test and train partitions.
         """
         # Get all the trajectory IDs from the dataset and make a copy of it.
-        unique_values = list(dataset.traj_id.unique())
+        unique_values = list(dataset['traj_id'].unique())
         unique_values_copy = unique_values.copy()
 
         # Take out a percentage of trajectories to return as the testing data.
@@ -73,12 +73,12 @@ class Selection:
                     Dictionary containing the test and train partitions.
         """
         # Get all the trajectory IDs from the dataset and make a copy of it.
-        unique_values = list(dataset.traj_id.unique())
+        unique_values = list(dataset['traj_id'].unique())
 
         # Must get a sorted list of trajectories and the number of points
         trajList = []
         for i in range(len(unique_values)):
-            trajSize = (dataset.traj_id == unique_values[i]).sum()
+            trajSize = (dataset['traj_id'] == unique_values[i]).sum()
             trajList.append([unique_values[i], trajSize])
 
         trajList.sort(key=lambda x: x[1])
@@ -123,7 +123,7 @@ class Selection:
 
         # Create a list with unique trajectory IDs and for each unique trajectory, find which
         # class it belongs to and then increase the count of that class.
-        uniqueTrajIds = dataset.traj_id.unique()
+        uniqueTrajIds = dataset['traj_id'].unique()
         for traj_id in uniqueTrajIds:
             key = dataset.reset_index().loc[dataset.reset_index()['traj_id'] == traj_id][classify].unique()
             uniqueValsDict[key[0]].append(traj_id)
