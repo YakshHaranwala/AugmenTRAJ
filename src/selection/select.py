@@ -19,8 +19,7 @@ import math
 
 class Selection:
     @staticmethod
-    def select_randomly(dataset: pd.DataFrame, customRandom,
-                        test_split_per: float = .2, ):
+    def select_randomly(dataset: pd.DataFrame, customRandom, k: float = .2, ):
         """
             Given the trajectories and the test splitting percentage, randomly
             select a percentage of trajectories that will be augmented.
@@ -31,8 +30,8 @@ class Selection:
                     The dataframe containing the trajectory data
                 customRandom: random.Random
                     Custom random number generator
-                test_split_per: float
-                    The percentage of data that should be split as the testing dataset.
+                k: float
+                    The percentage of data that should be selected.
 
             Returns
             -------
@@ -41,15 +40,15 @@ class Selection:
         """
         # Get all the trajectory IDs from the dataset and make a copy of it.
         unique_values = list(dataset['traj_id'].unique())
-        unique_values_copy = unique_values.copy()
 
         # Take out a percentage of trajectories to return as the testing data.
-        testValues = []
-        for i in range(math.floor(len(unique_values_copy) * test_split_per)):
-            testValues.append(unique_values_copy.pop(customRandom.randrange(len(unique_values_copy))))
+        # We pop the value out to make sure that
+        selected = []
+        for i in range(math.floor(len(unique_values) * k)):
+            selected.append(unique_values.pop(customRandom.randrange(len(unique_values))))
 
         # Return the dictionary containing the train test split.
-        return {"test": testValues, "train": unique_values_copy}
+        return selected
 
     @staticmethod
     def select_trajectories_proportionally(dataset: pd.DataFrame, random: random,
@@ -72,6 +71,7 @@ class Selection:
                 dict:
                     Dictionary containing the test and train partitions.
         """
+        # TODO: update this method to return a list of trajectories.
         # Get all the trajectory IDs from the dataset and make a copy of it.
         unique_values = list(dataset['traj_id'].unique())
 
