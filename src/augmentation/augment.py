@@ -23,7 +23,7 @@ class Augmentation:
         """
             Given the trajectories that are to be augmented, augment the trajectories by
             generating points randomly based on the given pradius. Further explanation can
-            be found here: <TODO: Add the paper link here.>
+            be found here:
 
             Parameters
             ----------
@@ -41,29 +41,28 @@ class Augmentation:
                 pd.DataFrame
                     The dataframe containing the augmented dataframe.
         """
-        noiseData = dataset.loc[dataset['traj_id'].isin(ids_to_augment)]
+        trajs_to_augment = dataset.loc[dataset['traj_id'].isin(ids_to_augment)]
         newDataSet = dataset.copy()
         angle = random.random() * 360
-        
+
         randPoint = random.randint(1, 10000001)
-        
+
         # Using lambda functions here now to alter row by row, need to do this as the lon circle function also
         # uses the latitude
 
         if circle == 'on':
-            noiseData['lat'] = noiseData.apply(lambda row: Alter.alter_latitude_circle_randomly(row, angle),
-                                               axis=1)
-            noiseData['lon'] = noiseData.apply(lambda row: Alter.alter_longitude_circle_randomly(row, angle),
-                                               axis=1)
+            trajs_to_augment['lat'] = trajs_to_augment.apply(lambda row:
+                                                             Alter.alter_latitude_circle_randomly(row, angle), axis=1)
+            trajs_to_augment['lon'] = trajs_to_augment.apply(lambda row:
+                                                             Alter.alter_longitude_circle_randomly(row, angle), axis=1)
         elif circle == 'in':
-            noiseData['lat'] = noiseData.apply(lambda row: Alter.alter_latitude_randomly(row),
-                                               axis=1)
-            noiseData['lon'] = noiseData.apply(lambda row: Alter.alter_longitude_randomly(row),
-                                               axis=1)
+            trajs_to_augment['lat'] = trajs_to_augment.apply(lambda row:
+                                                             Alter.alter_latitude_randomly(row), axis=1)
+            trajs_to_augment['lon'] = trajs_to_augment.apply(lambda row:
+                                                             Alter.alter_longitude_randomly(row), axis=1)
 
-        noiseData['traj_id'] = noiseData.apply(lambda row: row.traj_id + 'aug' + str(randPoint), axis=1)
-        # return noiseData
-        return pd.concat([newDataSet, noiseData])
+        trajs_to_augment['traj_id'] = trajs_to_augment.apply(lambda row: row.traj_id + 'aug' + str(randPoint), axis=1)
+        return pd.concat([newDataSet, trajs_to_augment])
 
     # @staticmethod
     # def augment_trajectories_with_interpolation(dataset: Union[PTRAILDataFrame, pd.DataFrame],
