@@ -10,6 +10,7 @@ import numpy as np
 from typing import Union
 from ptrail.features.kinematic_features import KinematicFeatures
 from ptrail.preprocessing.statistics import Statistics
+from ptrail.core.TrajectoryDF import PTRAILDataFrame
 from src.selection.helpers import SelectionHelpers
 from src.utils.alter import Alter
 
@@ -77,7 +78,6 @@ class Selection:
         # that class and add them to the selected list.
         for key, value in traj_id_and_class.items():
             num_traj_to_select = max(np.ceil(len(traj_id_and_class[key]) * k), 1)
-            print(f"Class: {key}, Total trajectories in class: {len(traj_id_and_class[key])}, trajectories selected: {num_traj_to_select}")
             # Randomly select the above calculated number of trajectories.
             selected_traj_ids.extend(
                 np.random.choice(traj_id_and_class[key], int(num_traj_to_select), replace=False).tolist()
@@ -86,8 +86,7 @@ class Selection:
         return selected_traj_ids
 
     @staticmethod
-    def select_fewest_class(dataset: pd.DataFrame, classify: str,
-                            customRandom, test_split_per: float = .2):
+    def select_fewest_class(dataset: pd.DataFrame, k: float = .2):
         """
             Given the trajectories and the test splitting percentage, return a list of trajectories that have the least 
             represented class
@@ -96,9 +95,9 @@ class Selection:
             ----------
                 dataset: pd.DataFrame
                     The dataframe containing the trajectory data
-                test_split_per: float
+                k: float
                     The percentage of data that should be split as the testing dataset.
-                classify: str
+                classification_col: str
                     The header of the class column.
                 customRandom: Random
                     A randomNumber generator with your preferred seed.
@@ -109,29 +108,14 @@ class Selection:
                     Dictionary containing the test and train partitions.
         """
         # TODO: Update this code to suit the framework, and hence return a list of selected ids to augment.
-        # Get all the unique classification column values and set their counts in the dict to 0.
-        uniqueValsDict = dict(dataset[classify].value_counts())
-        for key in uniqueValsDict:
-            uniqueValsDict[key] = []
+        # Get the trajectory ID and number of points in each trajectory.
+        unique_traj_dict = dataset['traj_id'].value_counts(ascending=True).to_dict()
 
-        # Create a list with unique trajectory IDs and for each unique trajectory, find which
-        # class it belongs to and then increase the count of that class.
-        uniqueTrajIds = dataset['traj_id'].unique()
-        for traj_id in uniqueTrajIds:
-            key = dataset.reset_index().loc[dataset.reset_index()['traj_id'] == traj_id][classify].unique()
-            uniqueValsDict[key[0]].append(traj_id)
+        # Calculate the number of trajectories to be selected.
+        num_traj_to_select = max(math.ceil(len(unique_traj_dict.keys()) * k), 1)
 
-        dictKeys = uniqueValsDict.keys()
-
-        testValues = []
-        trainValues = []
-        for val in dictKeys:
-            for i in range(math.floor(len(uniqueValsDict[val]) * test_split_per)):
-                testValues.append(uniqueValsDict[val].pop(customRandom.randrange(len(uniqueValsDict[val]))))
-            trainValues = trainValues + uniqueValsDict[val]
-
-        # Return the dictionary containing the train test split.
-        return {"test": testValues, "train": trainValues}
+        # return the above number of trajectories.
+        return list(unique_traj_dict.keys())[:num_traj_to_select]
 
     @staticmethod
     def select_representative_trajectories(dataset: Union[PTRAILDataFrame, pd.DataFrame], target_col: str,
@@ -184,7 +168,8 @@ class Selection:
             single_traj = kinematic_stats.reset_index().loc[kinematic_stats.reset_index()['traj_id'] == traj_ids[i]]\
                                          .drop(columns=['traj_id', target_col]).set_index('Columns').transpose()
 
-            if SelectionHelpers.include_or_not(full_df_stats, single_traj, tolerance):
-                selected_traj.append(traj_ids[i] + "sel")
+            is_representative = SelectionHelpers.include_or_not(full_df_stats, single_traj, tolerance)
+            if is_representative:
+                selected_traj.append(traj_ids[i])
 
         return selected_traj

@@ -15,7 +15,7 @@ import pandas as pd
 
 class SelectionHelpers:
     @staticmethod
-    def include_or_not(full_df_stats, single_traj_stats, tolerance_multiplier):
+    def include_or_not(full_df_stats, single_traj_stats, tolerance):
         """
             Determine whether a trajectory is a representative trajectory or not.
 
@@ -26,36 +26,25 @@ class SelectionHelpers:
                 | This is done in order to define a strict range for
                   each of the feature of the trajectory.
 
-            Note
-            ----
-                The tolerance_multiplier has to be between 0 and 1 and ideally
-                smaller than 0.75.
-
             Parameters
             ----------
                 full_df_stats: pd.DataFrame
                     The dataframe containing the stats for the entire dataset given.
                 single_traj_stats: pd.DataFrame
                     The dataframe containing the stats for a single trajectory.
-                tolerance_multiplier: float
-                    The multiplier to control the number of trajectories selected for augmentation.
+                tolerance: float
+                    The tolerance to control the number of trajectories selected for augmentation.
         """
-        if 0 < tolerance_multiplier <= 1:
-            flags = []
-            for i in range(len(full_df_stats.columns)):
-                # Calculate the tolerance.
-                tolerance = (full_df_stats[full_df_stats.columns[i]]['max']
-                             - full_df_stats[full_df_stats.columns[i]]['min']) * tolerance_multiplier
+        # TODO: Improve this method.
+        # Check if the dataframes have the same shape.
+        if full_df_stats.shape != single_traj_stats.shape:
+            raise ValueError("The dataframes do not have the same shape.")
 
-                # Find if the stat values of the trajectory are in the desired range.
-                closeness = np.allclose(full_df_stats[full_df_stats.columns[i]],
-                                        single_traj_stats[single_traj_stats.columns[i]], rtol=0, atol=tolerance)
+        # Find the element-wise closeness between the two dataframes.
+        closeness = np.isclose(full_df_stats, single_traj_stats, rtol=0, atol=tolerance/2)
 
-                # Convert the closeness array to a series and get its value counts for True/False counts.
-                val_count_dict = pd.Series(closeness).value_counts().to_dict()
-                flags.append(max(val_count_dict, key=val_count_dict.get))
+        # Calculate the percentage of elements that are close.
+        close_percentage = (closeness.sum() / (closeness.shape[0] * closeness.shape[1]))
+        print(f"Closeness: {close_percentage}")
 
-            # If more values are within the range than not, then return True, False otherwise.
-            return flags.count(True) > flags.count(False)
-        else:
-            raise ValueError("The Tolerance multiplier has to be between 0 and 1.")
+        return close_percentage > tolerance
