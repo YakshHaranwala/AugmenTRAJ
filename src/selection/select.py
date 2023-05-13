@@ -86,7 +86,7 @@ class Selection:
         return selected_traj_ids
 
     @staticmethod
-    def select_fewest_class(dataset: pd.DataFrame, k: float = .2):
+    def select_with_fewest_points(dataset: pd.DataFrame, k: float = .2):
         """
             Given the trajectories and the test splitting percentage, return a list of trajectories that have the least 
             represented class
@@ -97,17 +97,12 @@ class Selection:
                     The dataframe containing the trajectory data
                 k: float
                     The percentage of data that should be split as the testing dataset.
-                classification_col: str
-                    The header of the class column.
-                customRandom: Random
-                    A randomNumber generator with your preferred seed.
 
             Returns
             -------
                 dict:
                     Dictionary containing the test and train partitions.
         """
-        # TODO: Update this code to suit the framework, and hence return a list of selected ids to augment.
         # Get the trajectory ID and number of points in each trajectory.
         unique_traj_dict = dataset['traj_id'].value_counts(ascending=True).to_dict()
 
@@ -119,7 +114,7 @@ class Selection:
 
     @staticmethod
     def select_representative_trajectories(dataset: Union[PTRAILDataFrame, pd.DataFrame], target_col: str,
-                                           tolerance=0.5):
+                                           closeness_cutoff: float, tolerance=0.5):
         """
              Given a dataset, select the trajectories that are representative of
              the given dataset.
@@ -140,14 +135,17 @@ class Selection:
                     - The PTRAIL parameter of target column.
                     - It is the column which is the column header for classification result column.
                 tolerance: float
-                    The Tolerance multiplier for creating the range of comparison of stats.
-                k: float
-                    The percentage of data that should be split as the testing dataset.
+                    The tolerance that is passed into Numpy isClose() method to control
+                    what trajectories are considered as close. Note that this is passed
+                    as absolute tolerance and relative tolerance is always set to 0.
+                    See numpy isClose() documentation for more info.
+                closeness_cutoff: float
+                    The percentage cutoff to accept a trajectory as a representative trajectory.
 
              Returns
              -------
                 list:
-                    The list containing trajectory Ids that are representative of the dataset..
+                    The list containing trajectory Ids that are representative of the dataset.
         """
         # Generate Kinematic stats for the given dataframe.
         kinematic_stats = Statistics.generate_kinematic_stats(dataset, target_col)
@@ -168,8 +166,8 @@ class Selection:
             single_traj = kinematic_stats.reset_index().loc[kinematic_stats.reset_index()['traj_id'] == traj_ids[i]]\
                                          .drop(columns=['traj_id', target_col]).set_index('Columns').transpose()
 
-            is_representative = SelectionHelpers.include_or_not(full_df_stats, single_traj, tolerance)
-            if is_representative:
+            closeness = SelectionHelpers.include_or_not(full_df_stats, single_traj, tolerance)
+            if closeness > closeness_cutoff:
                 selected_traj.append(traj_ids[i])
 
         return selected_traj

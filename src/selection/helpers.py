@@ -19,13 +19,6 @@ class SelectionHelpers:
         """
             Determine whether a trajectory is a representative trajectory or not.
 
-            Note
-            ----
-                | The tolerance is calculated as follows:
-                      stat_range * tolerance multiplier
-                | This is done in order to define a strict range for
-                  each of the feature of the trajectory.
-
             Parameters
             ----------
                 full_df_stats: pd.DataFrame
@@ -33,18 +26,20 @@ class SelectionHelpers:
                 single_traj_stats: pd.DataFrame
                     The dataframe containing the stats for a single trajectory.
                 tolerance: float
-                    The tolerance to control the number of trajectories selected for augmentation.
+                    The tolerance that is passed into Numpy isClose() method to control
+                    what trajectories are considered as close. Note that this is passed
+                    as absolute tolerance and relative tolerance is always set to 0.
+                    See numpy isClose() documentation for more info.
+
         """
-        # TODO: Improve this method.
         # Check if the dataframes have the same shape.
         if full_df_stats.shape != single_traj_stats.shape:
             raise ValueError("The dataframes do not have the same shape.")
 
         # Find the element-wise closeness between the two dataframes.
-        closeness = np.isclose(full_df_stats, single_traj_stats, rtol=0, atol=tolerance/2)
+        closeness = np.isclose(full_df_stats, single_traj_stats, rtol=0, atol=tolerance)
 
         # Calculate the percentage of elements that are close.
         close_percentage = (closeness.sum() / (closeness.shape[0] * closeness.shape[1]))
-        print(f"Closeness: {close_percentage}")
 
-        return close_percentage > tolerance
+        return close_percentage

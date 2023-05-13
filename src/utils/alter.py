@@ -8,23 +8,18 @@ from math import sqrt, pi, cos, sin
 from random import *
 import math
 
-# Create a random generator.
-random = Random
-
 
 class Alter:
     @staticmethod
-    def alter_latitude_randomly(row):
+    def alter_latitude_in_circle(row):
         """
             Given a latitude point and a radius, alter the point in order
             to create a new latitude within the circle of given radius.
 
             Parameters
             ----------
-                lat: float
-                    The latitude to alter.
-                pradius: float
-                    The radius within which the new latitude is supposed to be.
+                row:
+                    The row containing the latitude to be altered.
 
             Returns
             -------
@@ -32,7 +27,7 @@ class Alter:
                     The altered latitude value.
         """
         # Choose randomly whether to add or subtract from the point.
-        
+
         sign = randint(1, 2)
 
         if math.isnan(row.Distance):
@@ -41,8 +36,8 @@ class Alter:
             dist = row.Distance
         # Generate the angle value.
         # Distance in meters roughly to degrees lat/lon and use 10% of that as the radius we can move
-        r = dist * 0.00001 * .1 * sqrt(uniform(0,1))
-        theta = uniform(0,1) * 2 * pi
+        r = dist * 0.00001 * .1 * sqrt(uniform(0, 1))
+        theta = uniform(0, 1) * 2 * pi
 
         # Based on the random number generated above, either subtract
         # or add the theta value and return the point.
@@ -52,26 +47,24 @@ class Alter:
             return row.lat - r * cos(theta)
 
     @staticmethod
-    def alter_longitude_randomly(row):
+    def alter_longitude_in_circle(row):
         """
             Given a longitude point and a radius, alter the point in order
             to create a new longitude within the circle of given radius.
 
             Parameters
             ----------
-                lon: float
-                    The longitude to alter.
-                pradius: float
-                    The radius within which the new longitude is supposed to be.
+                row:
+                    The row containing the longitude to be altered.
 
             Returns
             -------
                 float:
-                    The altered latitude value.
+                    The altered longitude value.
         """
         # Choose randomly whether to add or subtract from the point.
         sign = randint(1, 2)
-        
+
         if math.isnan(row.Distance):
             dist = 1000
         else:
@@ -89,18 +82,21 @@ class Alter:
             return row.lon - r * cos(theta)
 
     @staticmethod
-    def alter_latitude_circle_randomly(row, angle):
+    def alter_latitude_on_circle(row, angle):
         """
-            Alter the latitude circle.
+            Alter the latitude value and generate a value that is on the circumference.
 
             Parameters
             ----------
-                # TODO: Nick, can you please finish up the docs here?
+                row:
+                    The row containing the latitude to be altered.
+                angle:
+                    The angle with which the point is to be changed.
 
-            Returns
+             Returns
             -------
                 float:
-
+                    The altered latitude value.
         """
         if math.isnan(row.Distance):
             dist = 1000
@@ -109,30 +105,28 @@ class Alter:
         return row.lat + (180 / math.pi) * (dist * 0.00001 * .1 * math.sin(angle))
 
     @staticmethod
-    def alter_longitude_circle_randomly(row, angle):
+    def alter_longitude_on_circle(row, angle):
         """
-            Alter the longitude circle.
+            Alter the longitude value and generate a value that is on the circumference.
 
             Parameters
             ----------
-                # TODO: Nick, can you please finish up the docs here?
+                row:
+                    The row containing the longitude to be altered.
+                angle:
+                    The angle with which the point is to be changed.
 
              Returns
             -------
                 float:
+                    The altered longitude value.
         """
         if math.isnan(row.Distance):
             dist = 1000
         else:
             dist = row.Distance
         try:
-            return row.lon + (180 / math.pi) * (dist * 0.00001 * .1 * math.cos(angle)) / math.cos(row.lat * math.pi / 180)
+            return row.lon + (180 / math.pi) * (dist * 0.00001 * .1 * math.cos(angle)) / math.cos(
+                row.lat * math.pi / 180)
         except ZeroDivisionError:
             print("Latitude division is yielding zero.")
-
-    @staticmethod
-    def alter_traj_randomly(traj, index):
-        """
-            # TODO: Nick, can you please finish up the docs here?
-        """
-        return traj + str(index)
