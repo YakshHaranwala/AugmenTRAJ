@@ -5,7 +5,7 @@
 
     | Authors: Nicholas Jesperson, Yaksh J. Haranwala
 """
-from random import randint, random
+import random
 import math
 
 import pandas as pd
@@ -19,7 +19,7 @@ from ptrail.core.TrajectoryDF import PTRAILDataFrame
 class Augmentation:
     @staticmethod
     def augment_trajectories_with_randomly_generated_points(dataset: pd.DataFrame, ids_to_augment: list,
-                                                            n_augmentations: int = 1, circle: str = 'on'):
+                                                            seed: int, circle: str = 'on'):
         """
             Given the trajectories that are to be augmented, augment the trajectories by
             generating points randomly based on the given pradius. Further explanation can
@@ -29,8 +29,8 @@ class Augmentation:
             ----------
                 dataset: Union[PTRAILDataFrame, pd.DataFrame]
                     The dataset containing the trajectories to be selected.
-                n_augmentations: int
-                    Number of times we have to augment each trajectory.
+                seed: int
+                    The seed that is to be used for random number generation.
                 circle: str
                     The method by which shaking of points is to be done.
                 ids_to_augment: float
@@ -43,8 +43,9 @@ class Augmentation:
         """
         traj_to_augment = dataset.loc[dataset['traj_id'].isin(ids_to_augment)]
         newDataSet = dataset.copy()
-        angle = random() * 360
-        randPoint = randint(1, 10000001)
+        random.seed(seed)
+        angle = random.random() * 360
+        randPoint = random.randint(1, 10000001)
 
         # Using lambda functions here now to alter row by row, need to do this as the lon circle function also
         # uses the latitude

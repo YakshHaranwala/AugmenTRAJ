@@ -19,7 +19,7 @@ import math
 
 class Selection:
     @staticmethod
-    def select_randomly(dataset: pd.DataFrame, k: float = .2):
+    def select_randomly(dataset: pd.DataFrame, seed: int, k: float = .2):
         """
             Given the trajectories and the test splitting percentage, randomly
             select a percentage of trajectories that will be augmented.
@@ -28,6 +28,8 @@ class Selection:
             ----------
                 dataset: pd.DataFrame
                     The dataframe containing the trajectory data
+                seed: int
+                    The seed that is to be used for random number generation.
                 k: float
                     The percentage of data that should be selected.
 
@@ -43,11 +45,13 @@ class Selection:
         traj_to_select = max(math.floor(len(unique_values) * k), 1)
 
         # Randomly select the number of ids calculated above without replacement and return them.
+        np.random.seed(seed)
         return np.random.choice(unique_values, traj_to_select, replace=False).tolist()
 
     @staticmethod
     def select_trajectories_proportionally(dataset: pd.DataFrame,
                                            classification_col: str,
+                                           seed: int,
                                            k: float = .2):
         """
             Given the trajectories and the test splitting percentage, randomly
@@ -60,6 +64,8 @@ class Selection:
                 classification_col: str
                     The column that is used in classification tasks. Essentially the value
                     that identifies each trajectory to a specific class.
+                seed: int
+                    The seed that is to be used for random number generation.
                 k: float
                     The percentage of data that should be selected.
 
@@ -79,6 +85,7 @@ class Selection:
         for key, value in traj_id_and_class.items():
             num_traj_to_select = max(np.ceil(len(traj_id_and_class[key]) * k), 1)
             # Randomly select the above calculated number of trajectories.
+            np.random.seed(seed)
             selected_traj_ids.extend(
                 np.random.choice(traj_id_and_class[key], int(num_traj_to_select), replace=False).tolist()
             )
