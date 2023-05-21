@@ -19,7 +19,7 @@ from ptrail.core.TrajectoryDF import PTRAILDataFrame
 class Augmentation:
     @staticmethod
     def augment_trajectories_with_randomly_generated_points(dataset: pd.DataFrame, ids_to_augment: list,
-                                                            seed: int, circle: str = 'on'):
+                                                            circle: str = 'on'):
         """
             Given the trajectories that are to be augmented, augment the trajectories by
             generating points randomly based on the given pradius. Further explanation can
@@ -29,8 +29,6 @@ class Augmentation:
             ----------
                 dataset: Union[PTRAILDataFrame, pd.DataFrame]
                     The dataset containing the trajectories to be selected.
-                seed: int
-                    The seed that is to be used for random number generation.
                 circle: str
                     The method by which shaking of points is to be done.
                 ids_to_augment: float
@@ -42,10 +40,8 @@ class Augmentation:
                     The dataframe containing the augmented dataframe.
         """
         traj_to_augment = dataset.loc[dataset['traj_id'].isin(ids_to_augment)]
-        newDataSet = dataset.copy()
-        random.seed(seed)
-        angle = random.random() * 360
         randPoint = random.randint(1, 10000001)
+        angle = random.random() * 360
 
         # Using lambda functions here now to alter row by row, need to do this as the lon circle function also
         # uses the latitude
@@ -61,7 +57,7 @@ class Augmentation:
                                                            Alter.alter_longitude_in_circle(row), axis=1)
 
         traj_to_augment['traj_id'] = traj_to_augment.apply(lambda row: row.traj_id + 'aug' + str(randPoint), axis=1)
-        return pd.concat([newDataSet, traj_to_augment])
+        return pd.concat([dataset, traj_to_augment])
 
     # @staticmethod
     # def augment_trajectories_with_interpolation(dataset: Union[PTRAILDataFrame, pd.DataFrame],
