@@ -15,7 +15,7 @@ import pandas as pd
 
 class SelectionHelpers:
     @staticmethod
-    def include_or_not(full_df_stats, single_traj_stats, tolerance):
+    def include_or_not(full_df_stats: pd.DataFrame, single_traj_stats: pd.DataFrame, tolerance: float):
         """
             Determine whether a trajectory is a representative trajectory or not.
 

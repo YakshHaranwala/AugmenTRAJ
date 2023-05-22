@@ -4,9 +4,8 @@
 
     | Authors: Nicholas Jesperson, Yaksh J. Haranwala
 """
-from math import sqrt, pi, cos, sin
-from random import *
 import math
+import random
 
 
 class Alter:
@@ -28,7 +27,7 @@ class Alter:
         """
         # Choose randomly whether to add or subtract from the point.
 
-        sign = randint(1, 2)
+        sign = random.randint(1, 2)
 
         if math.isnan(row.Distance):
             dist = 1000
@@ -36,15 +35,15 @@ class Alter:
             dist = row.Distance
         # Generate the angle value.
         # Distance in meters roughly to degrees lat/lon and use 10% of that as the radius we can move
-        r = dist * 0.00001 * .1 * sqrt(uniform(0, 1))
-        theta = uniform(0, 1) * 2 * pi
+        r = dist * 0.00001 * .1 * math.sqrt(random.uniform(0, 1))
+        theta = random.uniform(0, 1) * 2 * math.pi
 
         # Based on the random number generated above, either subtract
         # or add the theta value and return the point.
         if sign == 1:
-            return row.lat + r * cos(theta)
+            return row.lat + r * math.cos(theta)
         else:
-            return row.lat - r * cos(theta)
+            return row.lat - r * math.cos(theta)
 
     @staticmethod
     def alter_longitude_in_circle(row):
@@ -63,7 +62,7 @@ class Alter:
                     The altered longitude value.
         """
         # Choose randomly whether to add or subtract from the point.
-        sign = randint(1, 2)
+        sign = random.randint(1, 2)
 
         if math.isnan(row.Distance):
             dist = 1000
@@ -71,15 +70,15 @@ class Alter:
             dist = row.Distance
 
         # Generate the angle value.
-        r = dist * 0.00001 * .1 * sqrt(uniform(0, 1))
-        theta = uniform(0, 1) * 2 * pi
+        r = dist * 0.00001 * .1 * math.sqrt(random.uniform(0, 1))
+        theta = random.uniform(0, 1) * 2 * math.pi
 
         # Based on the random number generated above, either subtract
         # or add the theta value and return the point.
         if sign == 1:
-            return row.lon + r * cos(theta)
+            return row.lon + r * math.cos(theta)
         else:
-            return row.lon - r * cos(theta)
+            return row.lon - r * math.cos(theta)
 
     @staticmethod
     def alter_latitude_on_circle(row, angle):

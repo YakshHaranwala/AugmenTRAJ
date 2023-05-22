@@ -4,17 +4,16 @@
 
     | Authors: Nicholas Jesperson, Yaksh J. Haranwala
 """
-import pandas as pd
-import numpy as np
+import math
+from typing import Union, Text
 
-from typing import Union
+import numpy as np
+import pandas as pd
+from ptrail.core.TrajectoryDF import PTRAILDataFrame
 from ptrail.features.kinematic_features import KinematicFeatures
 from ptrail.preprocessing.statistics import Statistics
-from ptrail.core.TrajectoryDF import PTRAILDataFrame
-from src.selection.helpers import SelectionHelpers
-from src.utils.alter import Alter
 
-import math
+from src.selection.helpers import SelectionHelpers
 
 
 class Selection:
@@ -50,7 +49,7 @@ class Selection:
 
     @staticmethod
     def select_trajectories_proportionally(dataset: pd.DataFrame,
-                                           classification_col: str,
+                                           classification_col: Text,
                                            seed: int,
                                            k: float = .2):
         """
@@ -120,8 +119,8 @@ class Selection:
         return list(unique_traj_dict.keys())[:num_traj_to_select]
 
     @staticmethod
-    def select_representative_trajectories(dataset: Union[PTRAILDataFrame, pd.DataFrame], target_col: str,
-                                           closeness_cutoff: float, tolerance=0.5):
+    def select_representative_trajectories(dataset: Union[PTRAILDataFrame, pd.DataFrame], target_col: Text,
+                                           closeness_cutoff: float, tolerance: float = 0.5):
         """
              Given a dataset, select the trajectories that are representative of
              the given dataset.
