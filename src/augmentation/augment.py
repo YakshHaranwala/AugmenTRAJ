@@ -31,7 +31,7 @@ class Augmentation:
                 circle: str
                     The method by which shaking of points is to be done.
                 ids_to_augment: float
-                    The fraction of data which is to be sampled for adding noise.
+                    The trajectory Ids to be augmented.
 
             Returns
             -------
@@ -46,14 +46,14 @@ class Augmentation:
         # uses the latitude
         if circle == 'on':
             traj_to_augment['lat'] = traj_to_augment.apply(lambda row:
-                                                           Alter.alter_latitude_on_circle(row, angle), axis=1)
+                                                           Alter.alter_point_on_circle(row, angle, 'latitude'), axis=1)
             traj_to_augment['lon'] = traj_to_augment.apply(lambda row:
-                                                           Alter.alter_longitude_on_circle(row, angle), axis=1)
+                                                           Alter.alter_point_on_circle(row, angle, 'longitude'), axis=1)
         elif circle == 'in':
             traj_to_augment['lat'] = traj_to_augment.apply(lambda row:
-                                                           Alter.alter_latitude_in_circle(row), axis=1)
+                                                           Alter.alter_point_in_circle(row, 'latitude'), axis=1)
             traj_to_augment['lon'] = traj_to_augment.apply(lambda row:
-                                                           Alter.alter_longitude_in_circle(row), axis=1)
+                                                           Alter.alter_point_in_circle(row, 'longitude'), axis=1)
 
         traj_to_augment['traj_id'] = traj_to_augment.apply(lambda row: row.traj_id + 'aug' + str(randPoint), axis=1)
         return pd.concat([dataset, traj_to_augment])
@@ -159,3 +159,38 @@ class Augmentation:
             curr_traj_count = len(class_traj_ids)
 
         return dataset
+
+    @staticmethod
+    def augment_trajectories_by_dropping_points(dataset: pd.DataFrame, ids_to_augment: List,
+                                                drop_probability: float = 0.25):
+        """
+            Given the trajectories that are to be augmented, augment the trajectories by
+            randomly dropping points with a given probability.
+
+            Parameters
+            ----------
+                dataset: Union[PTRAILDataFrame, pd.DataFrame]
+                    The dataset containing the trajectories to be selected.
+                ids_to_augment: float
+                    The trajectory Ids to be augmented.
+                drop_probability: float
+                    The probability with which points are to be dropped.
+
+            Returns
+            -------
+                pd.DataFrame
+                    The dataframe containing the augmented data along with the original ones.
+        """
+        traj_to_augment = dataset.loc[dataset['traj_id'].isin(ids_to_augment)]
+        randPoint = random.randint(1, 10000001)
+
+        for id_ in ids_to_augment:
+            rows_to_drop = []
+            trajectory = traj_to_augment.loc[traj_to_augment['traj_id'] == id_].reset_index()
+            for i in range(len(trajectory)):
+                if random.random() <= drop_probability:
+                    rows_to_drop.append(i)
+            trajectory.drop(rows_to_drop, inplace=True)
+
+        traj_to_augment['traj_id'] = traj_to_augment.apply(lambda row: row.traj_id + 'aug' + str(randPoint), axis=1)
+        return pd.concat([dataset, traj_to_augment])
