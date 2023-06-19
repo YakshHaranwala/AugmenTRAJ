@@ -6,9 +6,12 @@
 """
 import math
 import random
+import numpy as np
 
 
 class Alter:
+    _EARTH_RADIUS = 6378.137
+
     @staticmethod
     def alter_point_in_circle(row, point_to_alter):
         """
@@ -85,3 +88,53 @@ class Alter:
                 return row.lat + (180 / math.pi) * (dist * 0.00001 * .1 * math.sin(angle))
         except ZeroDivisionError:
             print("Latitude division is yielding zero.")
+
+    @staticmethod
+    def calculate_point_based_on_stretch(row, lat_stretch: float, lon_stretch: float,
+                                         stretch_method: str = 'max'):
+        """
+            Given a latitude value and a stretch distance, randomly select
+            a point between [lat-stretch_distance, lat+stretch_distance].
+
+            Parameters
+            ----------
+                row:
+                    The row containing the latitude, longitude values to be stretched.
+                lat_stretch: float
+                    The max distance that is to be used while stretching the latitude.
+                lon_stretch: float
+                    The max distance that is to be used while stretching the longitude.
+                stretch_method: str
+                    The method that is to be used to stretch the point.
+
+            Returns
+            -------
+                float:
+                    The stretched point value between [lat-stretch_distance, lat+stretch_distance].
+        """
+        # Calculate the min and the max latitude based on distance.
+        lat_degree_to_distance_factor = (1 / ((2 * math.pi / 360) * Alter._EARTH_RADIUS)) / 1000
+        min_new_lat = row.lat - (lat_stretch * lat_degree_to_distance_factor)
+        max_new_lat = row.lat + (lat_stretch * lat_degree_to_distance_factor)
+
+        # Calculate the min and the max longitude based on distance.
+        lon_degree_to_distance_factor = (1 / ((2 * math.pi / 360) * Alter._EARTH_RADIUS)) / 1000
+        min_new_lon = row.lon - (lon_stretch * lon_degree_to_distance_factor) / math.cos(row.lat * (math.pi / 180))
+        max_new_lon = row.lon + (lon_stretch * lon_degree_to_distance_factor) / math.cos(row.lat * (math.pi / 180))
+
+        # Get a random point by stretching.
+        if stretch_method == 'min':
+            return min_new_lat, min_new_lon
+
+        if stretch_method == 'max':
+            return max_new_lat, max_new_lon
+
+        if stretch_method == 'min_max_random':
+            if random.randint(0, 1) == 0:
+                return min_new_lat, min_new_lon
+            else:
+                return max_new_lat, max_new_lon
+
+        if stretch_method == 'random':
+            return random.uniform(min_new_lat, max_new_lat), random.uniform(min_new_lon, max_new_lon)
+

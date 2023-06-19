@@ -125,6 +125,105 @@ class Augmentation:
         return pd.concat(final_dataset)
 
     @staticmethod
+    def augment_trajectories_by_dropping_points(dataset: pd.DataFrame, ids_to_augment: List,
+                                                drop_probability: float = 0.25):
+        """
+            Given the trajectories that are to be augmented, augment the trajectories by
+            randomly dropping points with a given probability.
+
+            Parameters
+            ----------
+                dataset: Union[PTRAILDataFrame, pd.DataFrame]
+                    The dataset containing the trajectories to be selected.
+                ids_to_augment: float
+                    The trajectory Ids to be augmented.
+                drop_probability: float
+                    The probability with which points are to be dropped.
+
+            Returns
+            -------
+                pd.DataFrame
+                    The dataframe containing the augmented data along with the original ones.
+        """
+        traj_to_augment = dataset.loc[dataset['traj_id'].isin(ids_to_augment)]
+        randPoint = random.randint(1, 10000001)
+
+        for id_ in ids_to_augment:
+            rows_to_drop = []
+            trajectory = traj_to_augment.loc[traj_to_augment['traj_id'] == id_].reset_index()
+            for i in range(len(trajectory)):
+                if random.random() <= drop_probability:
+                    rows_to_drop.append(i)
+            trajectory.drop(rows_to_drop, inplace=True)
+
+        traj_to_augment['traj_id'] = traj_to_augment.apply(lambda row: row.traj_id + 'aug' + str(randPoint), axis=1)
+        return pd.concat([dataset, traj_to_augment])
+
+    @staticmethod
+    def augment_by_stretching(dataset: pd.DataFrame, ids_to_augment: List, stretch_method: Text,
+                              lat_stretch: float, lon_stretch: float):
+        """
+            Given the trajectories that are to be augmented, augment the trajectories by
+            stretching the points.
+
+            Parameters
+            ----------
+                dataset: Union[PTRAILDataFrame, pd.DataFrame]
+                    The dataset containing the trajectories to be selected.
+                ids_to_augment: float
+                    The trajectory Ids to be augmented.
+                stretch_method: Text
+                    The stretch method to be used when augmenting the data.
+                lat_stretch: float
+                    The maximum distance by which the latitude is to be stretched.
+                lon_stretch: float
+                    The minimum distance by which the longitude is to be stretched.
+
+            Returns
+            -------
+                pd.DataFrame
+                    The dataframe containing the augmented data along with the original ones.
+        """
+        traj_to_augment = dataset.loc[dataset['traj_id'].isin(ids_to_augment)].reset_index(drop=True)
+        randPoint = random.randint(1, 10000001)
+
+        # Using lambda functions here now to alter row by row, need to do this as the lon circle function also
+        # uses the latitude
+        for i in range(len(traj_to_augment)):
+            if stretch_method == 'min':
+                lat, lon = Alter.calculate_point_based_on_stretch(traj_to_augment.iloc[i], lat_stretch, lon_stretch,
+                                                                  'min')
+                # print(f"Before: {traj_to_augment.at[i, 'lat'], traj_to_augment.at[i, 'lat']}")
+                traj_to_augment.at[i, 'lat'] = lat
+                traj_to_augment.at[i, 'lon'] = lon
+                traj_to_augment.at[i, 'traj_id'] = traj_to_augment.at[i, 'traj_id'] + 'aug' + stretch_method + str(randPoint)
+                # print(f"After: {traj_to_augment.at[i, 'lat'], traj_to_augment.at[i, 'lat']}")
+
+            elif stretch_method == 'max':
+                lat, lon = Alter.calculate_point_based_on_stretch(traj_to_augment.iloc[i], lat_stretch, lon_stretch,
+                                                                  'max')
+                traj_to_augment.loc[i, 'lat'] = lat
+                traj_to_augment.loc[i, 'lon'] = lon
+                traj_to_augment.at[i, 'traj_id'] = traj_to_augment.at[i, 'traj_id'] + 'aug' + stretch_method + str(randPoint)
+
+            elif stretch_method == 'min_max_random':
+                lat, lon = Alter.calculate_point_based_on_stretch(traj_to_augment.iloc[i], lat_stretch, lon_stretch,
+                                                                  'min_max_random')
+                traj_to_augment.loc[i, 'lat'] = lat
+                traj_to_augment.loc[i, 'lon'] = lon
+                traj_to_augment.at[i, 'traj_id'] = traj_to_augment.at[i, 'traj_id'] + 'aug' + stretch_method + str(randPoint)
+
+            else:
+                lat, lon = Alter.calculate_point_based_on_stretch(traj_to_augment.iloc[i], lat_stretch, lon_stretch,
+                                                                  'random')
+                traj_to_augment.loc[i, 'lat'] = lat
+                traj_to_augment.loc[i, 'lon'] = lon
+                traj_to_augment.at[i, 'traj_id'] = traj_to_augment.at[i, 'traj_id'] + 'aug' + stretch_method + str(randPoint)
+
+        return pd.concat([dataset, traj_to_augment])
+
+    # ----------------------------------- Helper Methods ------------------------------------- #
+    @staticmethod
     def _balance_single_class(dataset: pd.DataFrame, circle: Text, target_traj_count: int):
         """
             Given the dataset and a list of trajectory Ids belonging to a particular class in the
@@ -159,38 +258,3 @@ class Augmentation:
             curr_traj_count = len(class_traj_ids)
 
         return dataset
-
-    @staticmethod
-    def augment_trajectories_by_dropping_points(dataset: pd.DataFrame, ids_to_augment: List,
-                                                drop_probability: float = 0.25):
-        """
-            Given the trajectories that are to be augmented, augment the trajectories by
-            randomly dropping points with a given probability.
-
-            Parameters
-            ----------
-                dataset: Union[PTRAILDataFrame, pd.DataFrame]
-                    The dataset containing the trajectories to be selected.
-                ids_to_augment: float
-                    The trajectory Ids to be augmented.
-                drop_probability: float
-                    The probability with which points are to be dropped.
-
-            Returns
-            -------
-                pd.DataFrame
-                    The dataframe containing the augmented data along with the original ones.
-        """
-        traj_to_augment = dataset.loc[dataset['traj_id'].isin(ids_to_augment)]
-        randPoint = random.randint(1, 10000001)
-
-        for id_ in ids_to_augment:
-            rows_to_drop = []
-            trajectory = traj_to_augment.loc[traj_to_augment['traj_id'] == id_].reset_index()
-            for i in range(len(trajectory)):
-                if random.random() <= drop_probability:
-                    rows_to_drop.append(i)
-            trajectory.drop(rows_to_drop, inplace=True)
-
-        traj_to_augment['traj_id'] = traj_to_augment.apply(lambda row: row.traj_id + 'aug' + str(randPoint), axis=1)
-        return pd.concat([dataset, traj_to_augment])
