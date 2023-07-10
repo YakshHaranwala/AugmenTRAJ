@@ -107,8 +107,15 @@ class TestUtils:
                                                                     tolerance=10)
 
         # Balance the dataset.
-        balanced_on = Augmentation.balance_dataset_with_augmentation(training, class_col, 'on')
-        balanced_in = Augmentation.balance_dataset_with_augmentation(training, class_col, 'in')
+        balanced_on = Augmentation.balance_dataset_with_augmentation(training, class_col,
+                                                                     balance_method='random', circle='on')
+        balanced_in = Augmentation.balance_dataset_with_augmentation(training, class_col,
+                                                                     balance_method='random', circle='in')
+        balanced_drop = Augmentation.balance_dataset_with_augmentation(training, class_col, balance_method='drop',
+                                                                       drop_probability=0.5)
+        balanced_stretch = Augmentation.balance_dataset_with_augmentation(training, class_col, balance_method='stretch',
+                                                                          stretch_method='min_max_random',
+                                                                          lat_stretch=1000, lon_stretch=1000)
 
         # ------------------------ Create the iterable map to be returned ---------------------------------- #
         return {
@@ -121,6 +128,8 @@ class TestUtils:
             REPRESENTATIVE_SELECTED: rep_selected,
             BALANCED_ON: balanced_on,
             BALANCED_IN: balanced_in,
+            BALANCED_DROP: balanced_drop,
+            BALANCED_STRETCH: balanced_stretch
         }
 
     @staticmethod
@@ -150,7 +159,7 @@ class TestUtils:
         """
         x_train, y_train = None, None
 
-        if augment_strategy == BASE:
+        if augment_strategy == BASE and 'balanced' not in select_strategy:
             training = Statistics.pivot_stats_df(Statistics.generate_kinematic_stats(iter_map[TRAINING], class_col),
                                                  class_col).dropna()
             x_train = training.drop(columns=[class_col])
@@ -186,8 +195,8 @@ class TestUtils:
     def augment_trajectories_using_random_strategy(dataset, ids_to_augment, circle,
                                                    class_col, n_augmentations):
         """
-            Given the dataset, ids to augment and the circle select_strategy, augment
-            the data using the randomly generated point on/in circle select_strategy.
+            Given the dataset, ids to augment and the balance_method select_strategy, augment
+            the data using the randomly generated point on/in balance_method select_strategy.
 
             Parameters
             ----------
@@ -196,7 +205,7 @@ class TestUtils:
                 ids_to_augment: list
                     The list containing trajectory Ids to be augmented.
                 circle: str
-                    The circle select_strategy to be used. Valid values are: on, in.
+                    The balance_method select_strategy to be used. Valid values are: on, in.
                 class_col: str
                     The column that is used as the Y value in classification task.
                 n_augmentations: int

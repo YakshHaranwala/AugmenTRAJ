@@ -16,7 +16,7 @@ class Alter:
     def alter_point_in_circle(row, point_to_alter):
         """
             Given a latitude point and a radius, alter the point in order
-            to create a new latitude within the circle of given radius.
+            to create a new latitude within the balance_method of given radius.
 
             Parameters
             ----------

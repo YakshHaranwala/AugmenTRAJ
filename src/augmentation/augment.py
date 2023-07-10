@@ -42,7 +42,7 @@ class Augmentation:
         randPoint = random.randint(1, 10000001)
         angle = random.random() * 360
 
-        # Using lambda functions here now to alter row by row, need to do this as the lon circle function also
+        # Using lambda functions here now to alter row by row, need to do this as the lon balance_method function also
         # uses the latitude
         if circle == 'on':
             traj_to_augment['lat'] = traj_to_augment.apply(lambda row:
@@ -59,8 +59,8 @@ class Augmentation:
         return pd.concat([dataset, traj_to_augment])
 
     @staticmethod
-    def balance_dataset_with_augmentation(dataset: pd.DataFrame, classification_col: Text,
-                                          circle: Text = 'on', target_multiplier: float = 1.1):
+    def balance_dataset_with_augmentation(dataset: pd.DataFrame, classification_col: Text, balance_method: Text,
+                                          target_multiplier: float = 1.1, **kwargs):
         """
             Given the trajectories that are to be augmented, augment the trajectories by
             generating points randomly based on the given pradius. Further explanation can
@@ -95,11 +95,13 @@ class Augmentation:
                     The dataset containing the trajectories to be selected.
                 classification_col: str
                     The column that is used as the y value in the classification tasks.
-                circle: str
-                    The method by which shaking of points is to be done.
+                balance_method: str
+                    The method of balancing the dataset to be used.
                 target_multiplier: float
                     The multiplier that is used to calculate the max number of trajectories
                     that each class needs to have.
+                **kwargs: Any
+                    Ensure that the balance method and its relevant arguments are passed in this.
 
             Returns
             -------
@@ -118,9 +120,23 @@ class Augmentation:
 
         final_dataset = []
         for traj_class, traj_ids in traj_id_and_class.items():
-            traj_to_augment = dataset.loc[dataset['traj_id'].isin(traj_ids)]
-            final_dataset.append(Augmentation._balance_single_class(dataset=traj_to_augment, circle=circle,
-                                                                    target_traj_count=target_traj_count))
+            aug, traj_to_augment = None, dataset.loc[dataset['traj_id'].isin(traj_ids)]
+            if balance_method == 'random':
+                aug = Augmentation._balance_single_class_with_randomly_generated_points(dataset=traj_to_augment,
+                                                                                        circle=kwargs['circle'],
+                                                                                        target_traj_count=target_traj_count)
+            elif balance_method == 'stretch':
+                aug = Augmentation._balance_single_class_with_stretching(dataset=traj_to_augment,
+                                                                         target_traj_count=target_traj_count,
+                                                                         stretch_method=kwargs['stretch_method'],
+                                                                         lat_stretch=kwargs['lat_stretch'],
+                                                                         lon_stretch=kwargs['lon_stretch'])
+            elif balance_method == 'drop':
+                aug = Augmentation._balance_single_class_with_dropping(dataset=traj_to_augment,
+                                                                       target_traj_count=target_traj_count,
+                                                                       drop_probability=kwargs['drop_probability'])
+
+            final_dataset.append(aug)
 
         return pd.concat(final_dataset)
 
@@ -145,19 +161,15 @@ class Augmentation:
                 pd.DataFrame
                     The dataframe containing the augmented data along with the original ones.
         """
-        traj_to_augment = dataset.loc[dataset['traj_id'].isin(ids_to_augment)]
+        traj_to_augment = dataset.loc[dataset['traj_id'].isin(ids_to_augment)].copy()
         randPoint = random.randint(1, 10000001)
 
-        for id_ in ids_to_augment:
-            rows_to_drop = []
-            trajectory = traj_to_augment.loc[traj_to_augment['traj_id'] == id_].reset_index()
-            for i in range(len(trajectory)):
-                if random.random() <= drop_probability:
-                    rows_to_drop.append(i)
-            trajectory.drop(rows_to_drop, inplace=True)
+        rows_to_drop = traj_to_augment.groupby('traj_id').apply(lambda x: x.sample(frac=drop_probability))\
+                                      .index.get_level_values(1)
+        traj_to_augment.drop(rows_to_drop, inplace=True)
+        traj_to_augment['traj_id'] = traj_to_augment['traj_id'] + 'aug' + str(randPoint)
 
-        traj_to_augment['traj_id'] = traj_to_augment.apply(lambda row: row.traj_id + 'aug' + str(randPoint), axis=1)
-        return pd.concat([dataset, traj_to_augment])
+        return pd.concat([dataset, traj_to_augment], ignore_index=True)
 
     @staticmethod
     def augment_by_stretching(dataset: pd.DataFrame, ids_to_augment: List, stretch_method: Text,
@@ -187,44 +199,47 @@ class Augmentation:
         traj_to_augment = dataset.loc[dataset['traj_id'].isin(ids_to_augment)].reset_index(drop=True)
         randPoint = random.randint(1, 10000001)
 
-        # Using lambda functions here now to alter row by row, need to do this as the lon circle function also
+        # Using lambda functions here now to alter row by row, need to do this as the lon balance_method function also
         # uses the latitude
         for i in range(len(traj_to_augment)):
             if stretch_method == 'min':
                 lat, lon = Alter.calculate_point_based_on_stretch(traj_to_augment.iloc[i], lat_stretch, lon_stretch,
                                                                   'min')
-                # print(f"Before: {traj_to_augment.at[i, 'lat'], traj_to_augment.at[i, 'lat']}")
                 traj_to_augment.at[i, 'lat'] = lat
                 traj_to_augment.at[i, 'lon'] = lon
-                traj_to_augment.at[i, 'traj_id'] = traj_to_augment.at[i, 'traj_id'] + 'aug' + stretch_method + str(randPoint)
-                # print(f"After: {traj_to_augment.at[i, 'lat'], traj_to_augment.at[i, 'lat']}")
+                traj_to_augment.at[i, 'traj_id'] = traj_to_augment.at[i, 'traj_id'] + 'aug' + stretch_method + str(
+                    randPoint)
 
             elif stretch_method == 'max':
                 lat, lon = Alter.calculate_point_based_on_stretch(traj_to_augment.iloc[i], lat_stretch, lon_stretch,
                                                                   'max')
                 traj_to_augment.loc[i, 'lat'] = lat
                 traj_to_augment.loc[i, 'lon'] = lon
-                traj_to_augment.at[i, 'traj_id'] = traj_to_augment.at[i, 'traj_id'] + 'aug' + stretch_method + str(randPoint)
+                traj_to_augment.at[i, 'traj_id'] = traj_to_augment.at[i, 'traj_id'] + 'aug' + stretch_method + str(
+                    randPoint)
 
             elif stretch_method == 'min_max_random':
                 lat, lon = Alter.calculate_point_based_on_stretch(traj_to_augment.iloc[i], lat_stretch, lon_stretch,
                                                                   'min_max_random')
                 traj_to_augment.loc[i, 'lat'] = lat
                 traj_to_augment.loc[i, 'lon'] = lon
-                traj_to_augment.at[i, 'traj_id'] = traj_to_augment.at[i, 'traj_id'] + 'aug' + stretch_method + str(randPoint)
+                traj_to_augment.at[i, 'traj_id'] = traj_to_augment.at[i, 'traj_id'] + 'aug' + stretch_method + str(
+                    randPoint)
 
             else:
                 lat, lon = Alter.calculate_point_based_on_stretch(traj_to_augment.iloc[i], lat_stretch, lon_stretch,
                                                                   'random')
                 traj_to_augment.loc[i, 'lat'] = lat
                 traj_to_augment.loc[i, 'lon'] = lon
-                traj_to_augment.at[i, 'traj_id'] = traj_to_augment.at[i, 'traj_id'] + 'aug' + stretch_method + str(randPoint)
+                traj_to_augment.at[i, 'traj_id'] = traj_to_augment.at[i, 'traj_id'] + 'aug' + stretch_method + str(
+                    randPoint)
 
         return pd.concat([dataset, traj_to_augment])
 
     # ----------------------------------- Helper Methods ------------------------------------- #
     @staticmethod
-    def _balance_single_class(dataset: pd.DataFrame, circle: Text, target_traj_count: int):
+    def _balance_single_class_with_randomly_generated_points(dataset: pd.DataFrame, circle: Text,
+                                                             target_traj_count: int):
         """
             Given the dataset and a list of trajectory Ids belonging to a particular class in the
             dataset, augment the trajectories in the given list such that the final dataset has
@@ -241,9 +256,6 @@ class Augmentation:
                     The dataframe containing the trajectory data.
                 circle: Text
                     The method by which shaking of points is to be done.
-                class_traj_ids: List
-                    The list containing all the trajectory Ids of the class that
-                    is to be balanced.
                 target_traj_count: int
                     The number of trajectories of the target class that the returned
                     dataframe should have.
@@ -252,8 +264,83 @@ class Augmentation:
 
         while curr_traj_count < target_traj_count:
             id_to_augment = np.random.choice(dataset['traj_id'].unique(), 1).tolist()
-            dataset = Augmentation.augment_trajectories_with_randomly_generated_points(dataset=dataset, circle=circle,
+            dataset = Augmentation.augment_trajectories_with_randomly_generated_points(dataset=dataset,
+                                                                                       circle=circle,
                                                                                        ids_to_augment=id_to_augment)
+            class_traj_ids = dataset['traj_id'].unique().tolist()
+            curr_traj_count = len(class_traj_ids)
+
+        return dataset
+
+    @staticmethod
+    def _balance_single_class_with_stretching(dataset: pd.DataFrame, target_traj_count: int,
+                                              stretch_method: Text, lat_stretch: float, lon_stretch: float):
+        """
+            Given the dataset and a list of trajectory Ids belonging to a particular class in the
+            dataset, augment the trajectories in the given list such that the final dataset has
+            the trajectories equal to a given target number.
+
+            Warning
+            -------
+                This is a helper method for the balance_dataset_with_augmentation(). Do not use it
+                directly as it may not yield desired results.
+
+            Parameters
+            ----------
+                dataset: pd.DataFrame
+                    The dataframe containing the trajectory data.
+                target_traj_count: int
+                    The number of trajectories of the target class that the returned
+                    dataframe should have.
+                stretch_method: Text
+                    The method of stretching to be used.
+                lat_stretch: float
+                    The maximum stretching to be done in the latitude direction.
+                lon_stretch: float
+                    THe maximum stretching to be done in the longitude direction.
+        """
+        curr_traj_count = len(dataset['traj_id'].unique().tolist())
+
+        while curr_traj_count < target_traj_count:
+            id_to_augment = np.random.choice(dataset['traj_id'].unique(), 1).tolist()
+            dataset = Augmentation.augment_by_stretching(dataset=dataset, ids_to_augment=id_to_augment,
+                                                         stretch_method=stretch_method, lat_stretch=lat_stretch,
+                                                         lon_stretch=lon_stretch)
+            class_traj_ids = dataset['traj_id'].unique().tolist()
+            curr_traj_count = len(class_traj_ids)
+
+        return dataset
+
+    @staticmethod
+    def _balance_single_class_with_dropping(dataset: pd.DataFrame, target_traj_count: int,
+                                            drop_probability: float):
+        """
+            Given the dataset and a list of trajectory Ids belonging to a particular class in the
+            dataset, augment the trajectories in the given list such that the final dataset has
+            the trajectories equal to a given target number.
+
+            Warning
+            -------
+                This is a helper method for the balance_dataset_with_augmentation(). Do not use it
+                directly as it may not yield desired results.
+
+            Parameters
+            ----------
+                dataset: pd.DataFrame
+                    The dataframe containing the trajectory data.
+                target_traj_count: int
+                    The number of trajectories of the target class that the returned
+                    dataframe should have.
+                drop_probability: float
+                    The probability with which points are to be dropped.
+        """
+        curr_traj_count = len(dataset['traj_id'].unique().tolist())
+
+        while curr_traj_count < target_traj_count:
+            id_to_augment = np.random.choice(dataset['traj_id'].unique(), 1).tolist()
+            dataset = Augmentation.augment_trajectories_by_dropping_points(dataset=dataset,
+                                                                           ids_to_augment=id_to_augment,
+                                                                           drop_probability=drop_probability)
             class_traj_ids = dataset['traj_id'].unique().tolist()
             curr_traj_count = len(class_traj_ids)
 
