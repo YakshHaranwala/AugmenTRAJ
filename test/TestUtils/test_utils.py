@@ -10,7 +10,7 @@ import random
 import pandas as pd
 from ptrail.preprocessing.statistics import Statistics
 
-from Notebooks.TestUtils.Keys import *
+from test.TestUtils.Keys import *
 from src.augmentation.augment import Augmentation
 from src.selection.select import Selection
 
@@ -327,3 +327,26 @@ class TestUtils:
             for item in final_results:
                 writer.writerow(item.split(", "))
             print(f"File successfully written to: {file_path}")
+
+    # ------------------------------ Results Summarizer ------------------------------- #
+    @staticmethod
+    def summarize_results(df: pd.DataFrame, title: str):
+        # Finding values corresponding to the base strategy
+        base_strategy_values = df[df['strategy'] == 'base'][['seed', 'model', 'accuracy', 'f1_score']]
+        base_strategy_values = base_strategy_values.rename(
+            columns={'accuracy': 'base_accuracy', 'f1_score': 'base_f1_score'})
+
+        # Finding values corresponding to the maximum accuracy and f1_score for each seed and model
+        max_accuracy_values = df.groupby(['seed', 'model'])[['accuracy', 'f1_score']].max().reset_index()
+        max_accuracy_values = max_accuracy_values.rename(
+            columns={'accuracy': 'max_accuracy', 'f1_score': 'max_f1_score'})
+
+        # Combining the dataframes
+        print(title)
+        combined = base_strategy_values.merge(max_accuracy_values, on=['seed', 'model'], how='outer')
+        combined['accuracy_delta'] = combined['max_accuracy'] - combined['base_accuracy']
+        combined['f1_score_delta'] = combined['max_f1_score'] - combined['base_f1_score']
+        combined = combined[['seed', 'model', 'base_accuracy', 'max_accuracy', 'accuracy_delta',
+                             'base_f1_score', 'max_f1_score', 'f1_score_delta']]
+        combined = combined.round(4)
+        return combined
