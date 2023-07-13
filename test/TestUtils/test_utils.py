@@ -8,9 +8,10 @@ import csv
 import random
 
 import pandas as pd
+import matplotlib.pyplot as plt
 from ptrail.preprocessing.statistics import Statistics
 
-from test.TestUtils.Keys import *
+from TestUtils.Keys import *
 from src.augmentation.augment import Augmentation
 from src.selection.select import Selection
 
@@ -342,11 +343,54 @@ class TestUtils:
             columns={'accuracy': 'max_accuracy', 'f1_score': 'max_f1_score'})
 
         # Combining the dataframes
-        print(title)
         combined = base_strategy_values.merge(max_accuracy_values, on=['seed', 'model'], how='outer')
+
+        # Get the max f1 score strategy.
+        max_f1_strategy = df.loc[df.groupby(['seed', 'model'])['f1_score'].idxmax()][['seed', 'model', 'strategy']]
+        max_f1_strategy.rename(columns={'strategy': 'max_f1_strategy'}, inplace=True)
+        combined = pd.merge(combined, max_f1_strategy, on=['seed', 'model'], how='inner')
+
+        # Get the max accuracy strategy.
+        max_acc_strategy = df.loc[df.groupby(['seed', 'model'])['accuracy'].idxmax()][['seed', 'model', 'strategy']]
+        max_acc_strategy.rename(columns={'strategy': 'max_acc_strategy'}, inplace=True)
+        combined = pd.merge(combined, max_acc_strategy, on=['seed', 'model'], how='inner')
+
+        # Calculate the accuracy delta and the f1_score delta and reorder the columns.
         combined['accuracy_delta'] = combined['max_accuracy'] - combined['base_accuracy']
         combined['f1_score_delta'] = combined['max_f1_score'] - combined['base_f1_score']
-        combined = combined[['seed', 'model', 'base_accuracy', 'max_accuracy', 'accuracy_delta',
-                             'base_f1_score', 'max_f1_score', 'f1_score_delta']]
-        combined = combined.round(4)
-        return combined
+        combined = combined[['seed', 'model', 'base_accuracy', 'max_accuracy', 'accuracy_delta', 'max_acc_strategy',
+                             'base_f1_score', 'max_f1_score', 'f1_score_delta', 'max_f1_strategy']]
+
+        print(title)
+        return combined.round(4)
+
+    @staticmethod
+    def plot_comparison_results(dataframe: pd.DataFrame, dataset_name: str):
+        """
+            Given the results dataset, and the dataset name, plot the comparison results for each model.
+
+            Parameters
+            ----------
+                dataframe: pd.DataFrame
+                    The results dataframe.
+                dataset_name: str
+                    The name of the dataset.
+        """
+        fig, ax = plt.subplots(3, 2, figsize=(25, 25))
+        ax = ax.flatten()
+
+        models = dataframe['model'].unique().tolist()
+
+        i = 0
+        for model in models:
+            small = dataframe.loc[dataframe['model'] == model]
+
+            small[['seed', 'base_accuracy', 'max_accuracy']].plot.bar(x='seed', ax=ax[i])
+            small[['seed', 'base_f1_score', 'max_f1_score']].plot.bar(x='seed', ax=ax[i + 1])
+
+            ax[i].set_title(f'{dataset_name} {model} Accuracy Results')
+            ax[i + 1].set_title(f'{dataset_name} {model} Accuracy Results')
+
+            i += 2
+
+        fig.tight_layout()
