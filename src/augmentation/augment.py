@@ -74,7 +74,7 @@ class Augmentation:
                 the dataset by making sure that each class has above calculated number
                 of trajectories.
 
-                Example: Consider your class has the following class splits:
+                Example: Consider your data has the following class splits:
                 Class A: 50 trajectories
                 Class B: 100 trajectories
                 Class C: 75 trajectories

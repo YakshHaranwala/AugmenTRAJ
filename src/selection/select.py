@@ -44,7 +44,8 @@ class Selection:
         traj_to_select = max(math.floor(len(unique_values) * k), 1)
 
         # Randomly select the number of ids calculated above without replacement and return them.
-        np.random.seed(seed)
+        if seed:
+            np.random.seed(seed)
         return np.random.choice(unique_values, traj_to_select, replace=False).tolist()
 
     @staticmethod
@@ -84,7 +85,8 @@ class Selection:
         for key, value in traj_id_and_class.items():
             num_traj_to_select = max(np.ceil(len(traj_id_and_class[key]) * k), 1)
             # Randomly select the above calculated number of trajectories.
-            np.random.seed(seed)
+            if seed:
+                np.random.seed(seed)
             selected_traj_ids.extend(
                 np.random.choice(traj_id_and_class[key], int(num_traj_to_select), replace=False).tolist()
             )
@@ -94,8 +96,8 @@ class Selection:
     @staticmethod
     def select_with_fewest_points(dataset: pd.DataFrame, k: float = .2):
         """
-            Given the trajectories and the test splitting percentage, return a list of trajectories that have the least 
-            represented class
+            Given the trajectories and the test splitting percentage, return a list of trajectories that have the least
+            number of points.
 
             Parameters
             ----------

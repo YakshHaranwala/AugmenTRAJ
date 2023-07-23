@@ -361,7 +361,6 @@ class TestUtils:
         combined = combined[['seed', 'model', 'base_accuracy', 'max_accuracy', 'accuracy_delta', 'max_acc_strategy',
                              'base_f1_score', 'max_f1_score', 'f1_score_delta', 'max_f1_strategy']]
 
-        print(title)
         return combined.round(4)
 
     @staticmethod
@@ -376,7 +375,7 @@ class TestUtils:
                 dataset_name: str
                     The name of the dataset.
         """
-        fig, ax = plt.subplots(3, 2, figsize=(25, 25))
+        fig, ax = plt.subplots(3, 2, figsize=(16, 15))
         ax = ax.flatten()
 
         models = dataframe['model'].unique().tolist()
@@ -385,8 +384,8 @@ class TestUtils:
         for model in models:
             small = dataframe.loc[dataframe['model'] == model]
 
-            small[['seed', 'base_accuracy', 'max_accuracy']].plot.bar(x='seed', ax=ax[i])
-            small[['seed', 'base_f1_score', 'max_f1_score']].plot.bar(x='seed', ax=ax[i + 1])
+            small[['seed', 'base_accuracy', 'max_accuracy']].plot.bar(x='seed', ax=ax[i], width=0.75)
+            small[['seed', 'base_f1_score', 'max_f1_score']].plot.bar(x='seed', ax=ax[i + 1], width=0.75)
 
             ax[i].set_title(f'{dataset_name} {model} Accuracy Results')
             ax[i + 1].set_title(f'{dataset_name} {model} Accuracy Results')
