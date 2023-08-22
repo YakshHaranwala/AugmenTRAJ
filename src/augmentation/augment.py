@@ -9,16 +9,16 @@ import math
 import random
 from typing import Union, List, Text
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from src.utils.alter import Alter
 
 
 class Augmentation:
     @staticmethod
-    def augment_trajectories_with_randomly_generated_points(dataset: pd.DataFrame, ids_to_augment: List,
-                                                            circle: Text = 'on'):
+    def augment_trajectories_with_randomly_generated_points(dataset: pd.DataFrame, percent_to_shake: float,
+                                                            ids_to_augment: List, circle: Text = 'on'):
         """
             Given the trajectories that are to be augmented, augment the trajectories by
             generating points randomly based on the given pradius. Further explanation can
@@ -28,6 +28,8 @@ class Augmentation:
             ----------
                 dataset: Union[PTRAILDataFrame, pd.DataFrame]
                     The dataset containing the trajectories to be selected.
+                percent_to_shake: float
+                    The percentage of points to shake for each trajectory.
                 circle: str
                     The method by which shaking of points is to be done.
                 ids_to_augment: float
@@ -38,25 +40,38 @@ class Augmentation:
                 pd.DataFrame
                     The dataframe containing the augmented data along with the original ones.
         """
-        traj_to_augment = dataset.loc[dataset['traj_id'].isin(ids_to_augment)]
+        # Create a copy of the original dataset and create an angle for augmentation.
+        # The randPoint is basically for appending to the new trajectory id to discriminate it from
+        # the original and the other augmented trajectories.
+        final_dataset = dataset.copy()
         randPoint = random.randint(1, 10000001)
         angle = random.random() * 360
 
-        # Using lambda functions here now to alter row by row, need to do this as the lon balance_method function also
-        # uses the latitude
-        if circle == 'on':
-            traj_to_augment['lat'] = traj_to_augment.apply(lambda row:
-                                                           Alter.alter_point_on_circle(row, angle, 'latitude'), axis=1)
-            traj_to_augment['lon'] = traj_to_augment.apply(lambda row:
-                                                           Alter.alter_point_on_circle(row, angle, 'longitude'), axis=1)
-        elif circle == 'in':
-            traj_to_augment['lat'] = traj_to_augment.apply(lambda row:
-                                                           Alter.alter_point_in_circle(row, 'latitude'), axis=1)
-            traj_to_augment['lon'] = traj_to_augment.apply(lambda row:
-                                                           Alter.alter_point_in_circle(row, 'longitude'), axis=1)
+        # Augment each of the trajectory.
+        for id_ in ids_to_augment:
+            small = final_dataset.loc[final_dataset['traj_id'] == id_]
 
-        traj_to_augment['traj_id'] = traj_to_augment.apply(lambda row: row.traj_id + 'aug' + str(randPoint), axis=1)
-        return pd.concat([dataset, traj_to_augment])
+            # Randomly select the points to be changed based on percent_to_shake given by the user.
+            points_to_change = small.groupby('traj_id').apply(lambda x: x.sample(frac=percent_to_shake))\
+                                    .index.get_level_values(1)
+
+            # Modify the points one at a time based on the circle method given by the user.
+            for i in range(len(points_to_change)):
+                row = small.loc[points_to_change[i]]
+                if circle == 'on':
+                    small.loc[i, 'lat'] = Alter.alter_point_on_circle(row, angle, 'latitude')
+                    small.loc[i, 'lon'] = Alter.alter_point_on_circle(row, angle, 'longitude')
+                elif circle == 'in':
+                    small.loc[i, 'lat'] = Alter.alter_point_in_circle(row, 'latitude')
+                    small.loc[i, 'lon'] = Alter.alter_point_in_circle(row, 'longitude')
+
+            # Create and use the new trajectory id for the augmented trajectory.
+            small['traj_id'] = id_ + 'aug' + str(randPoint)
+
+            # Add the augmented trajectory to the final dataset.
+            final_dataset = pd.concat([final_dataset, small])
+
+        return final_dataset
 
     @staticmethod
     def balance_dataset_with_augmentation(dataset: pd.DataFrame, classification_col: Text, balance_method: Text,

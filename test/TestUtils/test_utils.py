@@ -194,7 +194,7 @@ class TestUtils:
     # ----------------------------- Augmentation Utils ----------------------------- #
     @staticmethod
     def augment_trajectories_using_random_strategy(dataset, ids_to_augment, circle,
-                                                   class_col, n_augmentations):
+                                                   class_col, n_augmentations, percent_to_shake):
         """
             Given the dataset, ids to augment and the balance_method select_strategy, augment
             the data using the randomly generated point on/in balance_method select_strategy.
@@ -211,6 +211,8 @@ class TestUtils:
                     The column that is used as the Y value in classification task.
                 n_augmentations: int
                     The number of augmentations that are to be performed.
+                percent_to_shake: float
+                    Percentage of points to alter while augmenting.
 
             Returns
             -------
@@ -220,13 +222,15 @@ class TestUtils:
         # First augmentation to prepare the data for further augmentations.
         dataset = Augmentation.augment_trajectories_with_randomly_generated_points(dataset,
                                                                                    ids_to_augment=ids_to_augment,
-                                                                                   circle=circle)
+                                                                                   circle=circle,
+                                                                                   percent_to_shake=percent_to_shake)
 
         # subsequent augmentations.
         for i in range(1, n_augmentations):
             dataset = Augmentation.augment_trajectories_with_randomly_generated_points(dataset,
                                                                                        ids_to_augment=ids_to_augment,
-                                                                                       circle=circle)
+                                                                                       circle=circle,
+                                                                                       percent_to_shake=percent_to_shake)
 
         # convert to segment based format and return.
         pivoted = Statistics.pivot_stats_df(
