@@ -7,9 +7,12 @@
 import csv
 import random
 
-import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from ptrail.preprocessing.statistics import Statistics
+from sklearn.metrics import f1_score
+from sklearn.preprocessing import MinMaxScaler
 
 from TestUtils.Keys import *
 from src.augmentation.augment import Augmentation
@@ -68,10 +71,10 @@ class TestUtils:
                 | 1. Training dataset
                 | 2. Testing X data.
                 | 3. Testing Y data.
-                | 4. Randomly selected trajectories to augment.
-                | 5. Proportionally selected trajectories to augment.
-                | 6. Fewest selected trajectories to augment.
-                | 7. Representative selected trajectories to augment.
+                | 4. Randomly augmentation_targets trajectories to augment.
+                | 5. Proportionally augmentation_targets trajectories to augment.
+                | 6. Fewest augmentation_targets trajectories to augment.
+                | 7. Representative augmentation_targets trajectories to augment.
                 | 8. Balanced using ON select_strategy Dataset.
                 | 9. Balanced using IN select_strategy Dataset.
 
@@ -278,7 +281,7 @@ class TestUtils:
     @staticmethod
     def augment_trajectories_by_stretching(dataset, ids_to_augment, class_col):
         """
-            Given the dataset and the Ids to augment, augment the selected
+            Given the dataset and the Ids to augment, augment the augmentation_targets
             trajectories exactly 4 times, once using each stretch select_strategy.
 
 
@@ -313,6 +316,110 @@ class TestUtils:
                                             target_col_name=class_col).dropna()
         return pivoted.drop(columns=[class_col]), pivoted[class_col]
 
+    @staticmethod
+    def find_original_and_augmentation_pairs_and_calculate_differences(augmented_dataset, augmentation_targets):
+        """
+            Given the augmented dataset, find the average distance and standard deviation between each original
+            trajectory and its augmented counterparts.
+
+            Parameters
+            ----------
+                augmented_dataset: pd.DataFrame
+                    The dataset containing all the trajectories with augmented ones.
+                augmentation_targets: list
+                    The trajectory IDs that have been augmented.
+
+            Returns
+            -------
+                tuple:
+                    Tuple containing mean and standard deviation as described above.
+        """
+        scaler = MinMaxScaler((0, 1))
+        # Find augmented trajectories associated with each original trajectory.
+        select_to_augment_map = {}
+        for traj_id in augmentation_targets:
+            pattern = r'\b{}aug'.format(traj_id)
+            conditions = augmented_dataset.index.str.match(pattern)
+            select_to_augment_map[traj_id] = augmented_dataset.loc[conditions].index.unique()
+
+        # Now, for each original trajectory, calculate the features for all of them
+        # and then find the vector difference between the vectors.
+        distances = []
+        for traj_id in augmentation_targets:
+            # Get the features of the original traj.
+            original_features = augmented_dataset.loc[augmented_dataset.index == traj_id].to_numpy()[0]
+
+            # Get the features of the augmented trajectories.
+            aug_features = augmented_dataset.loc[
+                augmented_dataset.index.isin(select_to_augment_map[traj_id])].to_numpy()
+
+            # # Now, for each augmented trajectory, find the Euclidean distance between the
+            # # features of original trajectory and augmented trajectory and store it in a list.
+            for aug in aug_features:
+                scaled_original = scaler.fit_transform(original_features)
+                scaled_aug = scaler.fit_transform(aug)
+                print("Scaled Original: ", scaled_original)
+                print("Scaled Augmented: ", scaled_aug)
+                distance = np.linalg.norm(scaled_original - scaled_aug)
+                distances.append(distance)
+
+        return np.mean(distances), np.std(distances)
+
+    @staticmethod
+    def get_base_train_x_and_train_y(train_data, class_col):
+        """
+            Get the pivoted train_x and train_y dataset for the base dataset without any augmentation.
+
+            Parameters
+            ----------
+                train_data: pd.DataFrame
+                    The training dataset.
+                class_col: str
+                    The column that is used as the Y value in classification task.
+
+            Returns
+            -------
+                tuple: train_x, train_y
+        """
+        pivoted = Statistics.pivot_stats_df(Statistics.generate_kinematic_stats(train_data, class_col), class_col).dropna()
+        b_train_x = pivoted.drop(columns=[class_col])
+        b_train_y = pivoted[class_col]
+
+        return b_train_x, b_train_y
+
+    @staticmethod
+    def train_model_and_evaluate(model, train_x, train_y, test_x, test_y, seed):
+        """
+            Given the train and test data, train the model using appropriate dataset
+            and calculate the F1_score for the model using the inference process.
+
+            Parameters
+            ----------
+                model: sklearn.model
+                    The model that is to be trained.
+                train_x: pd.DataFrame
+                    The training x data.
+                train_y: pd.DataFrame
+                    The training y data.
+                test_x: pd.DataFrame
+                    The testing x data.
+                test_y: pd.DataFrame
+                    The testing y data.
+                seed: int
+                    The seed value to use to control the randomness.
+
+            Returns
+            -------
+                float:
+                    The F1_score for the model.
+        """
+        model.random_state = seed
+        model.fit(X=train_x, y=train_y)
+        pred_vals = model.predict(X=test_x)
+        score = f1_score(y_true=test_y, y_pred=pred_vals, average='weighted')
+
+        return round(score, 4)
+
     # ------------------------------- CSV File writer --------------------------------- #
     @staticmethod
     def write_csv_file(file_path, final_results):
@@ -327,7 +434,7 @@ class TestUtils:
                     The list containing the contents to write to csv.
 
         """
-        with open(file_path, mode="w", newline="") as file:
+        with open(file_path, mode="w") as file:
             writer = csv.writer(file)
             for item in final_results:
                 writer.writerow(item.split(", "))

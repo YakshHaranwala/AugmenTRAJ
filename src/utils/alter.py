@@ -40,7 +40,7 @@ class Alter:
             dist = row.Distance
         # Generate the angle value.
         # Distance in meters roughly to degrees lat/lon and use 10% of that as the radius we can move
-        r = dist * 0.00001 * .1 * math.sqrt(random.uniform(0, 1))
+        r = dist * 0.00001 * .5 * math.sqrt(random.uniform(0, 1))
         theta = random.uniform(0, 1) * 2 * math.pi
 
         # Based on the random number generated above, either subtract
@@ -83,9 +83,9 @@ class Alter:
         try:
             if point_to_alter == 'longitude':
                 return row.lon + (180 / math.pi) * \
-                       ((dist * 0.00001 * .1 * math.cos(angle)) / math.cos(row.lat * math.pi / 180))
+                       ((dist * 0.00001 * .5 * math.cos(angle)) / math.cos(row.lat * math.pi / 180))
             else:
-                return row.lat + (180 / math.pi) * (dist * 0.00001 * .1 * math.sin(angle))
+                return row.lat + (180 / math.pi) * (dist * 0.00001 * .5 * math.sin(angle))
         except ZeroDivisionError:
             print("Latitude division is yielding zero.")
 
