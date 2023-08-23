@@ -347,7 +347,7 @@ class TestUtils:
         distances = []
         for traj_id in augmentation_targets:
             # Get the features of the original traj.
-            original_features = augmented_dataset.loc[augmented_dataset.index == traj_id].to_numpy()[0]
+            original_features = augmented_dataset.loc[augmented_dataset.index == traj_id].to_numpy()
 
             # Get the features of the augmented trajectories.
             aug_features = augmented_dataset.loc[
@@ -356,10 +356,8 @@ class TestUtils:
             # # Now, for each augmented trajectory, find the Euclidean distance between the
             # # features of original trajectory and augmented trajectory and store it in a list.
             for aug in aug_features:
-                scaled_original = scaler.fit_transform(original_features)
-                scaled_aug = scaler.fit_transform(aug)
-                print("Scaled Original: ", scaled_original)
-                print("Scaled Augmented: ", scaled_aug)
+                scaled_original = scaler.fit_transform(original_features.reshape(-1, 1))
+                scaled_aug = scaler.fit_transform(aug.reshape(-1, 1))
                 distance = np.linalg.norm(scaled_original - scaled_aug)
                 distances.append(distance)
 
