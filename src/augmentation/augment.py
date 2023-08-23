@@ -52,7 +52,8 @@ class Augmentation:
             small = final_dataset.loc[final_dataset['traj_id'] == id_]
 
             # Randomly select the points to be changed based on percent_to_shake given by the user.
-            points_to_change = small.groupby('traj_id').apply(lambda x: x.sample(frac=percent_to_shake))\
+            points_to_change = small.groupby('traj_id', group_keys=True)\
+                                    .apply(lambda x: x.sample(frac=percent_to_shake))\
                                     .index.get_level_values(1)
 
             # Modify the points one at a time based on the circle method given by the user.
