@@ -361,7 +361,7 @@ class TestUtils:
                 distance = np.linalg.norm(scaled_original - scaled_aug)
                 distances.append(distance)
 
-        return np.mean(distances), np.std(distances)
+        return round(np.mean(distances), 4), round(np.std(distances), 4)
 
     @staticmethod
     def get_base_train_x_and_train_y(train_data, class_col):
@@ -417,6 +417,20 @@ class TestUtils:
         score = f1_score(y_true=test_y, y_pred=pred_vals, average='weighted')
 
         return round(score, 4)
+
+    @staticmethod
+    def create_model_row(seed, models, class_col, training, test_x, test_y):
+        scaler = MinMaxScaler((0, 1))
+        to_return = [[seed], [seed], [seed]]
+
+        base_train_x, base_train_y = TestUtils.get_base_train_x_and_train_y(training, class_col)
+        for i in range(len(models)):
+            to_return[i].append(models[i].__class__.__name__)
+            to_return[i].append(TestUtils.train_model_and_evaluate(models[i], scaler.fit_transform(base_train_x),
+                                                                   base_train_y, scaler.fit_transform(test_x),
+                                                                   test_y, seed))
+
+        return to_return
 
     # ------------------------------- CSV File writer --------------------------------- #
     @staticmethod
