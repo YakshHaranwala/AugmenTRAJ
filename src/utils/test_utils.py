@@ -14,7 +14,7 @@ from ptrail.preprocessing.statistics import Statistics
 from sklearn.metrics import f1_score
 from sklearn.preprocessing import MinMaxScaler
 
-from TestUtils.Keys import *
+from src.utils.Keys import *
 from src.augmentation.augment import Augmentation
 from src.selection.select import Selection
 
