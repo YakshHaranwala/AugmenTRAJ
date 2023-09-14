@@ -70,14 +70,14 @@ def train_and_evaluate():
 
         print(model_row)
 
-    file_path = "./bird_distances.csv"
+    file_path = "results/bird_distances.csv"
     with open(file_path, mode="w") as file:
         writer = csv.writer(file)
         for item in distance_results:
             writer.writerow(item)
         print(f"File successfully written to: {file_path}")
 
-    file_path = "./bird_f1_score.csv"
+    file_path = "results/bird_f1_score.csv"
     with open(file_path, mode="w") as file:
         writer = csv.writer(file)
         for item in model_results:
